@@ -1,5 +1,6 @@
 ---
 import { AlertTriangle } from 'lucide-astro';
+import HeroGrid from './HeroGrid.astro';
 
 /*
  * Shared layout for the legal pages (Privacy, Terms). Walks the
@@ -32,8 +33,9 @@ function isBulletBlock(b: BodyBlock): b is BulletBlock {
 
 <article>
   {/* Hero */}
-  <section class="bg-paper">
-    <div class="container py-16 md:py-20 lg:py-24">
+  <section class="relative overflow-hidden bg-paper">
+    <HeroGrid focus="top" />
+    <div class="container relative py-16 md:py-20 lg:py-24">
       <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{eyebrow}</p>
       <h1 class="mt-3 max-w-3xl font-display text-h1 font-bold leading-tight">
         <span class="heading-gradient">{headlineEmph}</span>

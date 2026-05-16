@@ -7,6 +7,7 @@ import TeamMemberCard from '../../components/TeamMemberCard.astro';
 import ClientsWall from '../../components/ClientsWall.astro';
 import TestimonialsSection from '../../components/TestimonialsSection.astro';
 import AboutHeroArt from '../../components/page-art/AboutHeroArt.astro';
+import HeroGrid from '../../components/HeroGrid.astro';
 import {
   getTeamMembers,
   getStats,
@@ -51,7 +52,7 @@ const tenureSuffix = locale === 'id' ? 'thn' : 'yrs';
 
   {/* Hero */}
   <section class="relative overflow-hidden bg-paper">
-    <div aria-hidden="true" class="absolute inset-0 opacity-[0.04] about-grid"></div>
+    <HeroGrid focus="right" />
     <div class="container relative py-20 md:py-28 lg:py-32">
       <div class="grid grid-cols-1 items-end gap-12 lg:grid-cols-[1.4fr_1fr]">
         <div>
@@ -218,11 +219,3 @@ const tenureSuffix = locale === 'id' ? 'thn' : 'yrs';
   <Footer slot="footer" locale={locale} />
 </BaseLayout>
 
-<style>
-  .about-grid {
-    background-image:
-      linear-gradient(to right, theme('colors.navy') 1px, transparent 1px),
-      linear-gradient(to bottom, theme('colors.navy') 1px, transparent 1px);
-    background-size: 32px 32px;
-  }
-</style>

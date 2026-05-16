@@ -5,6 +5,7 @@ import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import BlogPostCard from '../../components/BlogPostCard.astro';
 import BlogHeroArt from '../../components/page-art/BlogHeroArt.astro';
+import HeroGrid from '../../components/HeroGrid.astro';
 import { getAllPublishedPosts } from '../../lib/cms';
 import { LOCALES, getDict, isLocale, type Locale } from '../../lib/i18n';
 
@@ -34,8 +35,9 @@ const categories = Array.from(new Set(posts.map((p) => p.category))).sort();
   <Header slot="header" locale={locale} />
 
   {/* Hero */}
-  <section class="bg-paper">
-    <div class="container py-16 md:py-20 lg:py-24">
+  <section class="relative overflow-hidden bg-paper">
+    <HeroGrid focus="right" />
+    <div class="container relative py-16 md:py-20 lg:py-24">
       <div class="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.4fr_1fr]">
         <div>
           <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{t.blog.eyebrow}</p>

@@ -1,5 +1,6 @@
 ---
 import type { CmsStat } from '../lib/cms';
+import HeroGrid from './HeroGrid.astro';
 import { getDict, type Locale } from '../lib/i18n';
 
 interface Props {
@@ -17,7 +18,7 @@ const t = getDict(locale);
       class="relative overflow-hidden bg-navy py-16 text-paper md:py-20"
       aria-labelledby="stats-heading"
     >
-      <div aria-hidden="true" class="absolute inset-0 opacity-[0.08] stats-grid"></div>
+      <HeroGrid tone="light-on-dark" focus="bottom-right" />
       <div class="container relative">
         <header class="flex flex-col items-start gap-3 md:flex-row md:items-end md:justify-between">
           <div class="max-w-xl">
@@ -48,12 +49,3 @@ const t = getDict(locale);
     </section>
   )
 }
-
-<style>
-  .stats-grid {
-    background-image:
-      linear-gradient(to right, theme('colors.paper') 1px, transparent 1px),
-      linear-gradient(to bottom, theme('colors.paper') 1px, transparent 1px);
-    background-size: 48px 48px;
-  }
-</style>

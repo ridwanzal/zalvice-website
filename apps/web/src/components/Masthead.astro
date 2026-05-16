@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-astro';
 import type { CmsStat } from '../lib/cms';
 import { findStat } from '../lib/cms';
 import MastheadArt from './MastheadArt.astro';
+import HeroGrid from './HeroGrid.astro';
 import { getDict, format, pathFor, type Locale } from '../lib/i18n';
 
 interface Props {
@@ -29,7 +30,7 @@ const initial = variants[0]!;
 ---
 
 <section class="relative overflow-hidden bg-paper">
-  <div aria-hidden="true" class="absolute inset-0 opacity-[0.04] blueprint-grid"></div>
+  <HeroGrid focus="right" />
 
   <div class="container relative py-16 md:py-24 lg:py-28">
     <div class="grid grid-cols-1 items-center gap-12 lg:grid-cols-[1.2fr_1fr] lg:gap-16">
@@ -111,27 +112,6 @@ const initial = variants[0]!;
 </section>
 
 <style>
-  .blueprint-grid {
-    background-image:
-      linear-gradient(to right, theme('colors.navy') 1px, transparent 1px),
-      linear-gradient(to bottom, theme('colors.navy') 1px, transparent 1px);
-    background-size: 32px 32px;
-    -webkit-mask-image: linear-gradient(
-      to right,
-      transparent 0%,
-      black 14%,
-      black 86%,
-      transparent 100%
-    );
-    mask-image: linear-gradient(
-      to right,
-      transparent 0%,
-      black 14%,
-      black 86%,
-      transparent 100%
-    );
-  }
-
   /* Crossfade the headline spans during rotation. */
   [data-masthead-emphasis],
   [data-masthead-rest] {

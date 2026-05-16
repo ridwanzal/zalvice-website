@@ -1,5 +1,6 @@
 ---
 import { ArrowRight, CalendarDays } from 'lucide-astro';
+import HeroGrid from './HeroGrid.astro';
 import { getDict, pathFor, type Locale } from '../lib/i18n';
 
 interface Props {
@@ -13,7 +14,7 @@ const t = getDict(locale);
 <section class="bg-paper py-20 md:py-28 lg:py-32">
   <div class="container">
     <div class="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-navy via-navy to-brand p-10 text-paper md:p-16">
-      <div aria-hidden="true" class="absolute inset-0 opacity-[0.12] final-grid"></div>
+      <HeroGrid tone="light-on-dark" focus="bottom-left" intensity={0.14} size={56} />
       <div class="relative grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.4fr_1fr]">
         <div>
           <p class="font-mono text-xs uppercase tracking-[0.14em] text-paper/70">
@@ -63,11 +64,3 @@ const t = getDict(locale);
   </div>
 </section>
 
-<style>
-  .final-grid {
-    background-image:
-      linear-gradient(to right, theme('colors.paper') 1px, transparent 1px),
-      linear-gradient(to bottom, theme('colors.paper') 1px, transparent 1px);
-    background-size: 56px 56px;
-  }
-</style>

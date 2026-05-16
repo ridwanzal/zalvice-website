@@ -14,6 +14,7 @@ import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import TechStackSection from '../../components/TechStackSection.astro';
 import ServicesHeroArt from '../../components/page-art/ServicesHeroArt.astro';
+import HeroGrid from '../../components/HeroGrid.astro';
 import { getServices, getProjects } from '../../lib/cms';
 import { LOCALES, getDict, isLocale, pathFor, type Locale } from '../../lib/i18n';
 
@@ -75,7 +76,7 @@ const overlay = t.servicesPage.overlay as Record<string, Overlay | undefined>;
 
   {/* Hero */}
   <section class="relative overflow-hidden bg-paper">
-    <div aria-hidden="true" class="absolute inset-0 opacity-[0.04] services-grid"></div>
+    <HeroGrid focus="right" />
     <div class="container relative py-20 md:py-28 lg:py-32">
       <div class="grid grid-cols-1 items-center gap-12 lg:grid-cols-[1.4fr_1fr]">
         <div>
@@ -240,7 +241,7 @@ const overlay = t.servicesPage.overlay as Record<string, Overlay | undefined>;
   <section class="bg-paper py-20 md:py-24" aria-labelledby="integrated-heading">
     <div class="container">
       <div class="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-navy via-navy to-brand p-10 text-paper md:p-16">
-        <div aria-hidden="true" class="absolute inset-0 opacity-[0.1] integrated-grid"></div>
+        <HeroGrid tone="light-on-dark" focus="bottom-right" intensity={0.12} />
         <div class="relative grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.4fr_1fr]">
           <div>
             <p class="font-mono text-xs uppercase tracking-[0.14em] text-paper/70">
@@ -324,18 +325,3 @@ const overlay = t.servicesPage.overlay as Record<string, Overlay | undefined>;
   <Footer slot="footer" locale={locale} />
 </BaseLayout>
 
-<style>
-  .services-grid,
-  .integrated-grid {
-    background-image:
-      linear-gradient(to right, theme('colors.navy') 1px, transparent 1px),
-      linear-gradient(to bottom, theme('colors.navy') 1px, transparent 1px);
-    background-size: 32px 32px;
-  }
-  .integrated-grid {
-    background-image:
-      linear-gradient(to right, theme('colors.paper') 1px, transparent 1px),
-      linear-gradient(to bottom, theme('colors.paper') 1px, transparent 1px);
-    background-size: 48px 48px;
-  }
-</style>

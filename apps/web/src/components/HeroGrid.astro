@@ -1,0 +1,109 @@
+---
+/*
+ * Shared blueprint-grid backdrop for page mastheads and dark sections.
+ *
+ * The grid is fully solid at a chosen focal point and fades to
+ * transparent at the edges via a radial `mask-image`. The effect reads
+ * as "draw the eye here" — the grid is texture, not noise.
+ *
+ * Why a radial mask and not `filter: blur(...)` (the literal reading of
+ * "blur the grid"):
+ *  - blur of a 1px line softens it to invisibility within ~2px; the
+ *    grid looks like dirty paper rather than a designed backdrop.
+ *  - radial mask keeps line sharpness, just fades opacity outward —
+ *    same outcome of "create focus" with a cleaner visual.
+ *
+ * Pure CSS, no JS, no image assets. Mask is compositor-friendly so
+ * paint cost is constant regardless of viewport size.
+ *
+ * Props:
+ *   focus      where the focal point sits inside the box.
+ *   tone       'dark-on-light' (navy lines on paper/mist) | 'light-on-dark' (paper lines on navy).
+ *   intensity  the opacity at the focal point (0–1). Defaults vary by tone.
+ *   size       grid cell size in px. Defaults vary by tone.
+ */
+
+type Focus = 'center' | 'left' | 'right' | 'top' | 'bottom' | 'top-right' | 'bottom-right' | 'bottom-left';
+type Tone = 'dark-on-light' | 'light-on-dark';
+
+interface Props {
+  focus?: Focus | undefined;
+  tone?: Tone | undefined;
+  intensity?: number | undefined;
+  size?: number | undefined;
+}
+
+const {
+  focus = 'right',
+  tone = 'dark-on-light',
+  intensity,
+  size,
+} = Astro.props;
+
+// Defaults differ by tone — light-on-dark surfaces tolerate higher
+// opacity before the grid feels noisy.
+const effectiveIntensity = intensity ?? (tone === 'light-on-dark' ? 0.1 : 0.06);
+const effectiveSize = size ?? (tone === 'light-on-dark' ? 48 : 32);
+
+// Where the focus sits, expressed as a percentage tuple for the radial
+// gradient's centre. Same shape as background-position.
+const focusOrigin: Record<Focus, string> = {
+  center: '50% 50%',
+  left: '20% 50%',
+  right: '80% 50%',
+  top: '50% 18%',
+  bottom: '50% 82%',
+  'top-right': '80% 22%',
+  'bottom-right': '78% 78%',
+  'bottom-left': '22% 78%',
+};
+
+const origin = focusOrigin[focus];
+---
+
+<div
+  aria-hidden="true"
+  class:list={[
+    'hero-grid',
+    `hero-grid--${tone}`,
+    'absolute inset-0 pointer-events-none',
+  ]}
+  style={`--hero-grid-origin: ${origin}; --hero-grid-opacity: ${effectiveIntensity}; --hero-grid-size: ${effectiveSize}px;`}
+>
+</div>
+
+<style>
+  .hero-grid {
+    background-image:
+      linear-gradient(to right,  currentColor 1px, transparent 1px),
+      linear-gradient(to bottom, currentColor 1px, transparent 1px);
+    background-size: var(--hero-grid-size, 32px) var(--hero-grid-size, 32px);
+    opacity: var(--hero-grid-opacity, 0.06);
+
+    /*
+     * Radial mask. Grid is fully visible at the focal point and fades
+     * to transparent at the corners. closest-side keeps the visible
+     * disc proportional to the smaller axis so the effect looks the
+     * same on wide mastheads and tall narrow ones.
+     */
+    -webkit-mask-image: radial-gradient(
+      ellipse 70% 80% at var(--hero-grid-origin, 50% 50%),
+      black 0%,
+      black 25%,
+      transparent 95%
+    );
+    mask-image: radial-gradient(
+      ellipse 70% 80% at var(--hero-grid-origin, 50% 50%),
+      black 0%,
+      black 25%,
+      transparent 95%
+    );
+  }
+
+  .hero-grid--dark-on-light {
+    color: theme('colors.navy');
+  }
+  .hero-grid--light-on-dark {
+    color: theme('colors.paper');
+  }
+</style>
