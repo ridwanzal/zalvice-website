@@ -37,13 +37,28 @@ export async function authRoutes(fastify: FastifyInstance) {
     async (req, reply) => {
       const parsed = LoginSchema.safeParse(req.body);
       if (!parsed.success) {
+        // HTML form posts get redirected back with a flag; API consumers see 400.
+        if (req.headers.accept?.includes('text/html')) {
+          return reply.redirect('/admin/login?error=1', 303);
+        }
         throw fastify.httpErrors.badRequest('invalid login payload');
       }
       const { email, password, redirect } = parsed.data;
       const ip = req.ip;
 
+      const failureRedirect =
+        (typeof req.body === 'object' && req.body && (req.body as { redirect?: string }).redirect) ??
+        '/admin';
+      const safeFailureRedirect = /^\/admin(\/.*)?$/.test(failureRedirect)
+        ? failureRedirect
+        : '/admin';
+
+      const wantsHtml = req.headers.accept?.includes('text/html') ?? false;
+      const loginErrorRedirect = `/admin/login?error=1&redirect=${encodeURIComponent(safeFailureRedirect)}`;
+
       if (await isLockedOut({ email, ip })) {
         await recordLoginAttempt({ email, ip, success: false });
+        if (wantsHtml) return reply.redirect(loginErrorRedirect, 303);
         throw fastify.httpErrors.tooManyRequests('too many attempts, try again later');
       }
 
@@ -60,6 +75,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
       if (!user || user.disabled || !passwordOk) {
         await recordLoginAttempt({ email, ip, success: false });
+        if (wantsHtml) return reply.redirect(loginErrorRedirect, 303);
         throw fastify.httpErrors.unauthorized('invalid email or password');
       }
 

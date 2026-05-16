@@ -1,0 +1,248 @@
+---
+/*
+ * Shared project create/edit form. Arrays (services, techStack) are
+ * authored as comma-separated strings; outcomes is authored as JSON.
+ * The API accepts both forms (string or array) and serializes to JSON
+ * for storage. The full "outcome row" UI ships with a future batch.
+ */
+
+type ProjectFormData = {
+  slug?: string;
+  locale?: 'en' | 'id';
+  clientName?: string;
+  title?: string;
+  summary?: string;
+  bodyMd?: string;
+  heroImageUrl?: string | null;
+  heroImageAlt?: string | null;
+  year?: number;
+  industry?: string;
+  services?: string[];
+  techStack?: string[];
+  outcomes?: { label: string; value: string; unit?: string }[];
+  teamSize?: number;
+  durationMonths?: number;
+  featured?: boolean;
+  featuredOrder?: number;
+  status?: 'draft' | 'published' | 'archived';
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+};
+
+interface Props {
+  action: string;
+  values?: ProjectFormData;
+  submitLabel: string;
+}
+
+const { action, values = {}, submitLabel } = Astro.props as Props;
+const v = values;
+
+const servicesValue = v.services?.join(', ') ?? '';
+const techValue = v.techStack?.join(', ') ?? '';
+const outcomesValue = JSON.stringify(
+  v.outcomes ?? [{ label: 'Time saved', value: '40', unit: 'min/deploy' }],
+  null,
+  2,
+);
+---
+
+<form method="post" action={action} class="space-y-8">
+  <section class="rounded-2xl border border-line bg-paper p-6">
+    <h2 class="font-display text-lg font-semibold text-navy">Content</h2>
+    <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div class="md:col-span-2">
+        <label for="title" class="block text-sm font-medium text-navy">Project title <span class="text-brand">*</span></label>
+        <input
+          id="title" name="title" type="text" required minlength="2" maxlength="200"
+          value={v.title ?? ''}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+
+      <div>
+        <label for="slug" class="block text-sm font-medium text-navy">Slug <span class="text-brand">*</span></label>
+        <input
+          id="slug" name="slug" type="text" required pattern="[a-z0-9]+(-[a-z0-9]+)*"
+          value={v.slug ?? ''}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 font-mono text-sm text-ink focus:border-brand"
+        />
+      </div>
+
+      <div>
+        <label for="locale" class="block text-sm font-medium text-navy">Locale <span class="text-brand">*</span></label>
+        <select id="locale" name="locale" required class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand">
+          <option value="en" selected={v.locale !== 'id'}>English (en)</option>
+          <option value="id" selected={v.locale === 'id'}>Bahasa Indonesia (id)</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="clientName" class="block text-sm font-medium text-navy">Client name <span class="text-brand">*</span></label>
+        <input
+          id="clientName" name="clientName" type="text" required minlength="2" maxlength="200"
+          value={v.clientName ?? ''}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+
+      <div>
+        <label for="year" class="block text-sm font-medium text-navy">Year <span class="text-brand">*</span></label>
+        <input
+          id="year" name="year" type="number" required min="2000" max="2100"
+          value={v.year ?? new Date().getFullYear()}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+
+      <div class="md:col-span-2">
+        <label for="summary" class="block text-sm font-medium text-navy">Summary <span class="text-brand">*</span></label>
+        <textarea
+          id="summary" name="summary" required minlength="10" maxlength="500" rows="2"
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        >{v.summary ?? ''}</textarea>
+      </div>
+
+      <div class="md:col-span-2">
+        <label for="bodyMd" class="block text-sm font-medium text-navy">Body (Markdown) <span class="text-brand">*</span></label>
+        <textarea
+          id="bodyMd" name="bodyMd" required minlength="20" maxlength="100000" rows="18"
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 font-mono text-sm text-ink focus:border-brand"
+        >{v.bodyMd ?? ''}</textarea>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-line bg-paper p-6">
+    <h2 class="font-display text-lg font-semibold text-navy">Classification</h2>
+    <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div>
+        <label for="industry" class="block text-sm font-medium text-navy">Industry <span class="text-brand">*</span></label>
+        <input
+          id="industry" name="industry" type="text" required minlength="2" maxlength="100"
+          value={v.industry ?? ''}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+      <div>
+        <label for="services" class="block text-sm font-medium text-navy">Service pillars (comma-separated)</label>
+        <input
+          id="services" name="services" type="text"
+          value={servicesValue}
+          placeholder="design, dev, infra, support, consulting"
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 font-mono text-sm text-ink focus:border-brand"
+        />
+      </div>
+      <div class="md:col-span-2">
+        <label for="techStack" class="block text-sm font-medium text-navy">Tech stack (comma-separated)</label>
+        <input
+          id="techStack" name="techStack" type="text"
+          value={techValue}
+          placeholder="Next.js, Go, Postgres, AWS"
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 font-mono text-sm text-ink focus:border-brand"
+        />
+      </div>
+      <div>
+        <label for="teamSize" class="block text-sm font-medium text-navy">Team size</label>
+        <input
+          id="teamSize" name="teamSize" type="number" min="1" max="200"
+          value={v.teamSize ?? 4}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+      <div>
+        <label for="durationMonths" class="block text-sm font-medium text-navy">Duration (months)</label>
+        <input
+          id="durationMonths" name="durationMonths" type="number" min="1" max="120"
+          value={v.durationMonths ?? 4}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-line bg-paper p-6">
+    <h2 class="font-display text-lg font-semibold text-navy">Outcomes</h2>
+    <p class="mt-1 text-sm text-ink/70">JSON array of <code>{'{ label, value, unit? }'}</code>.</p>
+    <textarea
+      id="outcomes" name="outcomes" rows="6"
+      class="mt-3 w-full rounded-lg border border-line bg-mist px-4 py-2.5 font-mono text-xs text-ink focus:border-brand"
+    >{outcomesValue}</textarea>
+  </section>
+
+  <section class="rounded-2xl border border-line bg-paper p-6">
+    <h2 class="font-display text-lg font-semibold text-navy">Hero image</h2>
+    <p class="mt-1 text-sm text-ink/70">URL only for now.</p>
+    <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div>
+        <label for="heroImageUrl" class="block text-sm font-medium text-navy">Hero image URL</label>
+        <input
+          id="heroImageUrl" name="heroImageUrl" type="text" maxlength="1024"
+          value={v.heroImageUrl ?? ''}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 font-mono text-sm text-ink focus:border-brand"
+        />
+      </div>
+      <div>
+        <label for="heroImageAlt" class="block text-sm font-medium text-navy">Hero image alt text</label>
+        <input
+          id="heroImageAlt" name="heroImageAlt" type="text" maxlength="500"
+          value={v.heroImageAlt ?? ''}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-line bg-paper p-6">
+    <h2 class="font-display text-lg font-semibold text-navy">Featured & SEO</h2>
+    <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div>
+        <label class="block text-sm font-medium text-navy">Featured</label>
+        <label class="mt-2 inline-flex items-center gap-2 text-sm text-ink">
+          <input type="checkbox" name="featured" value="true" checked={v.featured ?? false} class="rounded border-line text-brand focus:ring-brand" />
+          Show in featured carousels
+        </label>
+      </div>
+      <div>
+        <label for="featuredOrder" class="block text-sm font-medium text-navy">Featured order</label>
+        <input
+          id="featuredOrder" name="featuredOrder" type="number" min="0" max="999"
+          value={v.featuredOrder ?? 0}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+      <div class="md:col-span-2">
+        <label for="seoTitle" class="block text-sm font-medium text-navy">SEO title</label>
+        <input
+          id="seoTitle" name="seoTitle" type="text" maxlength="200"
+          value={v.seoTitle ?? ''}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+      <div class="md:col-span-2">
+        <label for="seoDescription" class="block text-sm font-medium text-navy">SEO description</label>
+        <textarea
+          id="seoDescription" name="seoDescription" maxlength="500" rows="2"
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        >{v.seoDescription ?? ''}</textarea>
+      </div>
+    </div>
+  </section>
+
+  <section class="flex items-center justify-between gap-4 rounded-2xl border border-line bg-paper p-6">
+    <div>
+      <label for="status" class="block text-sm font-medium text-navy">Status</label>
+      <select id="status" name="status" class="mt-1.5 rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand">
+        {(['draft', 'published', 'archived'] as const).map((s) => (
+          <option value={s} selected={(v.status ?? 'draft') === s}>{s}</option>
+        ))}
+      </select>
+    </div>
+    <button
+      type="submit"
+      class="inline-flex items-center gap-2 rounded-full bg-navy px-6 py-3 font-medium text-paper transition-colors hover:bg-brand"
+    >
+      {submitLabel}
+    </button>
+  </section>
+</form>

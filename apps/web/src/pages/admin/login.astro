@@ -1,0 +1,98 @@
+---
+import '../../styles/globals.css';
+import { LogIn } from 'lucide-astro';
+import { getCurrentAdmin } from '../../lib/admin';
+
+export const prerender = false;
+
+const existing = await getCurrentAdmin(Astro);
+if (existing) return Astro.redirect('/admin', 302);
+
+const redirectTo = Astro.url.searchParams.get('redirect');
+const safeRedirect = redirectTo && /^\/admin(\/.*)?$/.test(redirectTo) ? redirectTo : '/admin';
+
+// Surface a generic error if we were redirected here from a failed login.
+const errored = Astro.url.searchParams.get('error') === '1';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0A2540" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Sign in · Zalvice admin</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="min-h-screen bg-mist flex items-center justify-center px-4 py-12">
+    <main class="w-full max-w-md">
+      <a href="/" class="mb-8 inline-flex items-center gap-2" aria-label="Zalvice home">
+        <img src="/logos/logos.svg" alt="Zalvice" width="86" height="25" class="h-7 w-auto" />
+        <span class="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">admin</span>
+      </a>
+
+      <div class="rounded-2xl border border-line bg-paper p-8 shadow-[0_1px_0_rgba(10,37,64,0.04),0_24px_48px_-24px_rgba(10,37,64,0.18)]">
+        <h1 class="font-display text-2xl font-bold text-navy">Sign in</h1>
+        <p class="mt-1.5 text-sm text-ink/70">
+          Use the credentials provisioned by your administrator.
+        </p>
+
+        {
+          errored && (
+            <p
+              role="alert"
+              class="mt-5 rounded-lg border border-danger/20 bg-danger/5 px-4 py-3 text-sm text-danger"
+            >
+              Invalid email or password. Please try again.
+            </p>
+          )
+        }
+
+        <form method="post" action="/api/auth/login" class="mt-6 space-y-4">
+          <input type="hidden" name="redirect" value={safeRedirect} />
+
+          <div>
+            <label for="email" class="block text-sm font-medium text-navy">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autocomplete="username"
+              autofocus
+              class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink placeholder:text-muted focus:border-brand"
+              placeholder="you@zalvice.com"
+            />
+          </div>
+
+          <div>
+            <label for="password" class="block text-sm font-medium text-navy">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              autocomplete="current-password"
+              minlength="1"
+              maxlength="200"
+              class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink placeholder:text-muted focus:border-brand"
+            />
+          </div>
+
+          <button
+            type="submit"
+            class="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full bg-navy px-6 py-3 font-medium text-paper transition-colors hover:bg-brand"
+          >
+            <LogIn class="h-4 w-4" aria-hidden="true" />
+            Sign in
+          </button>
+        </form>
+
+        <p class="mt-6 text-xs text-muted">
+          Locked out? Wait an hour or ask an administrator to reset your password.
+        </p>
+      </div>
+    </main>
+  </body>
+</html>

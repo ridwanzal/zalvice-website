@@ -1,0 +1,131 @@
+---
+import { Plus, Pencil, Archive } from 'lucide-astro';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { requireAdmin, apiGet } from '../../../lib/admin';
+
+export const prerender = false;
+
+const auth = await requireAdmin(Astro);
+if (!auth.user) return auth.redirect;
+const user = auth.user;
+
+type PostRow = {
+  id: number;
+  slug: string;
+  locale: 'en' | 'id';
+  title: string;
+  status: 'draft' | 'scheduled' | 'published' | 'archived';
+  publishedAt: string | null;
+  updatedAt: string;
+  featured: boolean;
+};
+
+const { posts } = await apiGet<{ posts: PostRow[] }>(Astro, '/api/admin/posts').catch(() => ({ posts: [] as PostRow[] }));
+
+const fmt = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+---
+
+<AdminLayout title="Blog posts" user={user}>
+  <header class="flex items-center justify-between">
+    <div>
+      <p class="font-mono text-[11px] uppercase tracking-[0.14em] text-brand">Content</p>
+      <h1 class="mt-1 font-display text-3xl font-bold text-navy">Blog posts</h1>
+      <p class="mt-1 text-sm text-ink/70">{posts.length} total</p>
+    </div>
+    <a
+      href="/admin/posts/new"
+      class="inline-flex items-center gap-2 rounded-full bg-navy px-5 py-2.5 text-sm font-medium text-paper transition-colors hover:bg-brand"
+    >
+      <Plus class="h-4 w-4" aria-hidden="true" />
+      New post
+    </a>
+  </header>
+
+  <section class="mt-8 overflow-hidden rounded-2xl border border-line bg-paper">
+    {posts.length === 0 ? (
+      <div class="px-6 py-16 text-center">
+        <p class="font-display text-lg font-semibold text-navy">No posts yet.</p>
+        <p class="mt-2 text-sm text-ink/70">Create your first blog post to get started.</p>
+        <a
+          href="/admin/posts/new"
+          class="mt-6 inline-flex items-center gap-2 rounded-full bg-navy px-5 py-2.5 text-sm font-medium text-paper hover:bg-brand"
+        >
+          <Plus class="h-4 w-4" aria-hidden="true" />
+          New post
+        </a>
+      </div>
+    ) : (
+      <table class="w-full">
+        <thead class="border-b border-line bg-mist text-left text-xs font-mono uppercase tracking-wider text-muted">
+          <tr>
+            <th class="px-5 py-3">Title</th>
+            <th class="px-5 py-3">Locale</th>
+            <th class="px-5 py-3">Status</th>
+            <th class="px-5 py-3">Updated</th>
+            <th class="px-5 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-line">
+          {posts.map((p) => (
+            <tr class="hover:bg-mist/40">
+              <td class="px-5 py-3">
+                <a href={`/admin/posts/${p.id}/edit`} class="block">
+                  <p class="font-display font-semibold text-navy hover:text-brand">
+                    {p.title}
+                    {p.featured && <span class="ml-2 rounded-full bg-brand/10 px-2 py-0.5 font-mono text-[10px] text-brand">featured</span>}
+                  </p>
+                  <p class="mt-0.5 font-mono text-[11px] text-muted">/{p.slug}</p>
+                </a>
+              </td>
+              <td class="px-5 py-3 font-mono text-xs uppercase text-muted">{p.locale}</td>
+              <td class="px-5 py-3">
+                <span
+                  class:list={[
+                    'inline-block rounded-full px-2 py-0.5 font-mono text-[10px] font-medium',
+                    p.status === 'published'
+                      ? 'bg-success/10 text-success'
+                      : p.status === 'draft'
+                        ? 'bg-mist text-muted'
+                        : p.status === 'scheduled'
+                          ? 'bg-brand/10 text-brand'
+                          : 'bg-mist text-navy',
+                  ]}
+                >
+                  {p.status}
+                </span>
+              </td>
+              <td class="px-5 py-3 font-mono text-[11px] text-muted">{fmt.format(new Date(p.updatedAt))}</td>
+              <td class="px-5 py-3 text-right">
+                <div class="inline-flex items-center gap-2">
+                  <a
+                    href={`/admin/posts/${p.id}/edit`}
+                    class="inline-flex h-8 items-center gap-1 rounded-lg border border-line bg-paper px-2.5 text-xs text-ink hover:border-brand hover:text-brand"
+                  >
+                    <Pencil class="h-3 w-3" aria-hidden="true" />
+                    Edit
+                  </a>
+                  {p.status !== 'archived' && (
+                    <form method="post" action={`/api/admin/posts/${p.id}/archive`} class="inline">
+                      <button
+                        type="submit"
+                        class="inline-flex h-8 items-center gap-1 rounded-lg border border-line bg-paper px-2.5 text-xs text-ink hover:border-danger hover:text-danger"
+                        onclick="return confirm('Archive this post?')"
+                      >
+                        <Archive class="h-3 w-3" aria-hidden="true" />
+                        Archive
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )}
+  </section>
+</AdminLayout>

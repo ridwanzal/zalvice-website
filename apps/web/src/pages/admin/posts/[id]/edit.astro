@@ -1,0 +1,72 @@
+---
+import { ArrowLeft, ExternalLink } from 'lucide-astro';
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import PostForm from '../../../../components/admin/PostForm.astro';
+import { requireAdmin, apiGet } from '../../../../lib/admin';
+
+export const prerender = false;
+
+const auth = await requireAdmin(Astro);
+if (!auth.user) return auth.redirect;
+const user = auth.user;
+
+const id = Number(Astro.params.id);
+if (!Number.isInteger(id)) return Astro.redirect('/admin/posts', 302);
+
+type PostFull = {
+  id: number;
+  slug: string;
+  locale: 'en' | 'id';
+  title: string;
+  excerpt: string;
+  bodyMd: string;
+  coverImageUrl: string | null;
+  coverImageAlt: string | null;
+  categorySlug: string;
+  authorName: string;
+  status: 'draft' | 'scheduled' | 'published' | 'archived';
+  publishedAt: string | null;
+  readingMinutes: number;
+  featured: boolean;
+  seoTitle: string | null;
+  seoDescription: string | null;
+};
+
+let post: PostFull;
+try {
+  const resp = await apiGet<{ post: PostFull }>(Astro, `/api/admin/posts/${id}`);
+  post = resp.post;
+} catch {
+  return Astro.redirect('/admin/posts', 302);
+}
+
+const publicHref = `/${post.locale}/blog/${post.slug}`;
+---
+
+<AdminLayout title={`Edit · ${post.title}`} user={user}>
+  <header class="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <div>
+      <a href="/admin/posts" class="inline-flex items-center gap-2 font-mono text-xs text-muted hover:text-brand">
+        <ArrowLeft class="h-3.5 w-3.5" aria-hidden="true" />
+        Back to posts
+      </a>
+      <h1 class="mt-3 font-display text-3xl font-bold text-navy">Edit post</h1>
+      <p class="mt-1 font-mono text-[11px] text-muted">
+        ID {post.id} · locale {post.locale.toUpperCase()} · status {post.status}
+      </p>
+    </div>
+    {post.status === 'published' && (
+      <a
+        href={publicHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-2 rounded-full border border-line bg-paper px-4 py-2 text-sm text-ink hover:border-brand hover:text-brand"
+      >
+        View live
+        <ExternalLink class="h-3.5 w-3.5" aria-hidden="true" />
+      </a>
+    )}
+  </header>
+
+  <PostForm action={`/api/admin/posts/${id}`} values={post} submitLabel="Save changes" />
+</AdminLayout>

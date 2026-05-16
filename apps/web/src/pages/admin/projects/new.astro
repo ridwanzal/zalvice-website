@@ -1,0 +1,25 @@
+---
+import { ArrowLeft } from 'lucide-astro';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import ProjectForm from '../../../components/admin/ProjectForm.astro';
+import { requireAdmin } from '../../../lib/admin';
+
+export const prerender = false;
+
+const auth = await requireAdmin(Astro);
+if (!auth.user) return auth.redirect;
+const user = auth.user;
+---
+
+<AdminLayout title="New project" user={user}>
+  <header class="mb-8">
+    <a href="/admin/projects" class="inline-flex items-center gap-2 font-mono text-xs text-muted hover:text-brand">
+      <ArrowLeft class="h-3.5 w-3.5" aria-hidden="true" />
+      Back to projects
+    </a>
+    <h1 class="mt-3 font-display text-3xl font-bold text-navy">New project</h1>
+    <p class="mt-1 text-sm text-ink/70">Fill in the fields below. Status starts as draft.</p>
+  </header>
+
+  <ProjectForm action="/api/admin/projects" submitLabel="Create project" />
+</AdminLayout>

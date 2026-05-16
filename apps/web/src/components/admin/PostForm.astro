@@ -1,0 +1,196 @@
+---
+/*
+ * Shared post create/edit form. Posts to the same path it's rendered on
+ * (Astro's `action` = "" maps to the current URL when rendered inside an
+ * SSR page). For new, the parent page sets `action="/api/admin/posts"`;
+ * for edit, `action={`/api/admin/posts/${id}`}`.
+ */
+
+type PostFormData = {
+  slug?: string;
+  locale?: 'en' | 'id';
+  title?: string;
+  excerpt?: string;
+  bodyMd?: string;
+  coverImageUrl?: string | null;
+  coverImageAlt?: string | null;
+  categorySlug?: string;
+  authorName?: string;
+  status?: 'draft' | 'scheduled' | 'published' | 'archived';
+  featured?: boolean;
+  readingMinutes?: number;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+};
+
+interface Props {
+  action: string;
+  values?: PostFormData;
+  submitLabel: string;
+}
+
+const { action, values = {}, submitLabel } = Astro.props as Props;
+const v = values;
+---
+
+<form method="post" action={action} class="space-y-8">
+  <section class="rounded-2xl border border-line bg-paper p-6">
+    <h2 class="font-display text-lg font-semibold text-navy">Content</h2>
+    <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div class="md:col-span-2">
+        <label for="title" class="block text-sm font-medium text-navy">Title <span class="text-brand">*</span></label>
+        <input
+          id="title" name="title" type="text" required minlength="2" maxlength="200"
+          value={v.title ?? ''}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+
+      <div>
+        <label for="slug" class="block text-sm font-medium text-navy">Slug <span class="text-brand">*</span></label>
+        <input
+          id="slug" name="slug" type="text" required pattern="[a-z0-9]+(-[a-z0-9]+)*"
+          value={v.slug ?? ''}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 font-mono text-sm text-ink focus:border-brand"
+          placeholder="lowercase-kebab-case"
+        />
+      </div>
+
+      <div>
+        <label for="locale" class="block text-sm font-medium text-navy">Locale <span class="text-brand">*</span></label>
+        <select
+          id="locale" name="locale" required
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        >
+          <option value="en" selected={v.locale !== 'id'}>English (en)</option>
+          <option value="id" selected={v.locale === 'id'}>Bahasa Indonesia (id)</option>
+        </select>
+      </div>
+
+      <div class="md:col-span-2">
+        <label for="excerpt" class="block text-sm font-medium text-navy">Excerpt <span class="text-brand">*</span></label>
+        <textarea
+          id="excerpt" name="excerpt" required minlength="10" maxlength="500" rows="2"
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        >{v.excerpt ?? ''}</textarea>
+        <p class="mt-1 font-mono text-[11px] text-muted">10–500 characters. Shown on listing pages.</p>
+      </div>
+
+      <div class="md:col-span-2">
+        <label for="bodyMd" class="block text-sm font-medium text-navy">Body (Markdown) <span class="text-brand">*</span></label>
+        <textarea
+          id="bodyMd" name="bodyMd" required minlength="20" maxlength="100000" rows="20"
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 font-mono text-sm text-ink focus:border-brand"
+          placeholder={`## Heading\n\nParagraph...\n\n- bullet`}
+        >{v.bodyMd ?? ''}</textarea>
+        <p class="mt-1 font-mono text-[11px] text-muted">
+          Markdown supported (headings, paragraphs, lists). Full editor in a future release.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-line bg-paper p-6">
+    <h2 class="font-display text-lg font-semibold text-navy">Metadata</h2>
+    <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div>
+        <label for="categorySlug" class="block text-sm font-medium text-navy">Category slug <span class="text-brand">*</span></label>
+        <input
+          id="categorySlug" name="categorySlug" type="text" required pattern="[a-z0-9]+(-[a-z0-9]+)*"
+          value={v.categorySlug ?? 'engineering'}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 font-mono text-sm text-ink focus:border-brand"
+        />
+      </div>
+      <div>
+        <label for="authorName" class="block text-sm font-medium text-navy">Author <span class="text-brand">*</span></label>
+        <input
+          id="authorName" name="authorName" type="text" required minlength="2" maxlength="100"
+          value={v.authorName ?? ''}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+      <div>
+        <label for="readingMinutes" class="block text-sm font-medium text-navy">Reading minutes</label>
+        <input
+          id="readingMinutes" name="readingMinutes" type="number" min="1" max="120"
+          value={v.readingMinutes ?? 3}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-navy">Featured</label>
+        <label class="mt-2 inline-flex items-center gap-2 text-sm text-ink">
+          <input type="checkbox" name="featured" value="true" checked={v.featured ?? false} class="rounded border-line text-brand focus:ring-brand" />
+          Show on the homepage articles row
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-line bg-paper p-6">
+    <h2 class="font-display text-lg font-semibold text-navy">Cover image</h2>
+    <p class="mt-1 text-sm text-ink/70">
+      Paste a URL — full media-library upload ships in a follow-up.
+    </p>
+    <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div>
+        <label for="coverImageUrl" class="block text-sm font-medium text-navy">Cover image URL</label>
+        <input
+          id="coverImageUrl" name="coverImageUrl" type="text" maxlength="1024"
+          value={v.coverImageUrl ?? ''}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 font-mono text-sm text-ink focus:border-brand"
+          placeholder="https://media.zalvice.com/..."
+        />
+      </div>
+      <div>
+        <label for="coverImageAlt" class="block text-sm font-medium text-navy">Cover image alt text</label>
+        <input
+          id="coverImageAlt" name="coverImageAlt" type="text" maxlength="500"
+          value={v.coverImageAlt ?? ''}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-line bg-paper p-6">
+    <h2 class="font-display text-lg font-semibold text-navy">SEO (optional)</h2>
+    <div class="mt-5 grid grid-cols-1 gap-5">
+      <div>
+        <label for="seoTitle" class="block text-sm font-medium text-navy">SEO title</label>
+        <input
+          id="seoTitle" name="seoTitle" type="text" maxlength="200"
+          value={v.seoTitle ?? ''}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+      <div>
+        <label for="seoDescription" class="block text-sm font-medium text-navy">SEO description</label>
+        <textarea
+          id="seoDescription" name="seoDescription" maxlength="500" rows="2"
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        >{v.seoDescription ?? ''}</textarea>
+      </div>
+    </div>
+  </section>
+
+  <section class="flex items-center justify-between gap-4 rounded-2xl border border-line bg-paper p-6">
+    <div>
+      <label for="status" class="block text-sm font-medium text-navy">Status</label>
+      <select
+        id="status" name="status"
+        class="mt-1.5 rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+      >
+        {(['draft', 'scheduled', 'published', 'archived'] as const).map((s) => (
+          <option value={s} selected={(v.status ?? 'draft') === s}>{s}</option>
+        ))}
+      </select>
+    </div>
+    <button
+      type="submit"
+      class="inline-flex items-center gap-2 rounded-full bg-navy px-6 py-3 font-medium text-paper transition-colors hover:bg-brand"
+    >
+      {submitLabel}
+    </button>
+  </section>
+</form>
