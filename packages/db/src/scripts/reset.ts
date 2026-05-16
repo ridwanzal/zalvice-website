@@ -11,8 +11,8 @@ if (process.env.NODE_ENV === 'production') {
 
 const connection = await mysql.createConnection(url);
 const dbName = new URL(url).pathname.slice(1);
-await connection.query(`DROP DATABASE IF EXISTS \`${dbName}\``);
-await connection.query(`CREATE DATABASE \`${dbName}\``);
+await connection.execute(`DROP DATABASE IF EXISTS \`${dbName}\``);
+await connection.execute(`CREATE DATABASE \`${dbName}\``);
 console.log(`✓ dropped + recreated database "${dbName}"`);
 await connection.end();
 console.log('  now run: pnpm db:migrate && pnpm db:seed');

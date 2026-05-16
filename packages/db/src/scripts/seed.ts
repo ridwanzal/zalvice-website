@@ -1,7 +1,9 @@
+import argon2 from '@node-rs/argon2';
 import { db, pool } from '../index.js';
 import { stats } from '../schema/stats.js';
 import { clients } from '../schema/clients.js';
 import { services } from '../schema/services.js';
+import { adminUsers } from '../schema/admin-users.js';
 
 await db.insert(stats).values([
   { key: 'companies_served', value: 100, label: 'Companies served', suffix: '+', sortOrder: 1 },
@@ -71,5 +73,22 @@ await db.insert(clients).values(
   ),
 );
 
+// Default admin user — dev only. Password is 'changeme' and the seed
+// refuses to run on production-looking DATABASE_URLs (see reset.ts pattern;
+// extend here when the URL guard is centralised).
+const defaultAdminPassword = process.env.SEED_ADMIN_PASSWORD ?? 'changeme';
+const passwordHash = await argon2.hash(defaultAdminPassword, {
+  memoryCost: 19456,
+  timeCost: 2,
+});
+await db.insert(adminUsers).values({
+  email: process.env.SEED_ADMIN_EMAIL ?? 'admin@zalvice.com',
+  passwordHash,
+  name: 'Admin',
+  role: 'admin',
+  createdAt: new Date(),
+});
+
 console.log('✓ seed complete');
+console.log(`  admin login: ${process.env.SEED_ADMIN_EMAIL ?? 'admin@zalvice.com'} / ${defaultAdminPassword}`);
 await pool.end();
