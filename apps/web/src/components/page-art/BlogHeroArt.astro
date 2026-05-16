@@ -1,0 +1,315 @@
+---
+/*
+ * /blog hero art — markdown source → rendered output.
+ *
+ * Two side-by-side panels inside one container. The left panel shows
+ * Markdown source typing in line by line (## heading, paragraph,
+ * bullet list); the right panel shows the same content materializing
+ * as a real heading, paragraph, and list item — fade + slight rise,
+ * staggered to follow each typed line on the left.
+ *
+ * Communicates "blog" specifically (not generic "writing") and nods
+ * to the technical audience by showing the actual Markdown source.
+ *
+ * No image assets. All motion is compositor-friendly: width
+ * on typewriter lines (cheap on absolutely-positioned single-line
+ * spans), transform + opacity on the rendered side, opacity on the
+ * caret. prefers-reduced-motion snaps to the finished state.
+ */
+---
+
+<div class="blog-art" aria-hidden="true">
+  <div class="art-frame">
+    {/* ── Left: Markdown source ────────────────────────────────────── */}
+    <div class="art-pane art-src">
+      <div class="art-pane-bar">
+        <span class="art-pane-dot"></span>
+        <span class="art-pane-dot"></span>
+        <span class="art-pane-dot"></span>
+        <span class="art-pane-label">post.md</span>
+      </div>
+      <div class="art-pane-body">
+        <div class="art-line art-line-1">
+          <span class="art-line-text">## Notes from the build floor</span>
+          <span class="art-caret art-caret-1"></span>
+        </div>
+        <div class="art-line art-line-2">
+          <span class="art-line-text">We **ship** weekly.</span>
+          <span class="art-caret art-caret-2"></span>
+        </div>
+        <div class="art-line art-line-3">
+          <span class="art-line-text">- Discover</span>
+          <span class="art-caret art-caret-3"></span>
+        </div>
+        <div class="art-line art-line-4">
+          <span class="art-line-text">- Design</span>
+          <span class="art-caret art-caret-4"></span>
+        </div>
+        <div class="art-line art-line-5">
+          <span class="art-line-text">- Build</span>
+          <span class="art-caret art-caret-5"></span>
+        </div>
+      </div>
+    </div>
+
+    {/* ── Right: rendered preview ──────────────────────────────────── */}
+    <div class="art-pane art-out">
+      <div class="art-pane-bar">
+        <span class="art-pane-label art-pane-label-out">Preview</span>
+        <span class="art-live">
+          <span class="art-live-dot"></span>
+          live
+        </span>
+      </div>
+      <div class="art-pane-body art-pane-body-out">
+        <h3 class="art-out-h">Notes from the build floor</h3>
+        <p class="art-out-p">
+          We <strong>ship</strong> weekly.
+        </p>
+        <ul class="art-out-list">
+          <li class="art-out-li art-out-li-1">Discover</li>
+          <li class="art-out-li art-out-li-2">Design</li>
+          <li class="art-out-li art-out-li-3">Build</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .blog-art {
+    position: relative;
+    width: 100%;
+    max-width: 30rem;
+    aspect-ratio: 4 / 3;
+  }
+
+  .art-frame {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ── Pane chrome (shared) ──────────────────────────────────────── */
+  .art-pane {
+    display: flex;
+    flex-direction: column;
+    border-radius: 0.75rem;
+    border: 1px solid theme('colors.line');
+    background: theme('colors.paper');
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(10, 37, 64, 0.04);
+  }
+  .art-pane-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid theme('colors.line');
+    background: theme('colors.mist');
+  }
+  .art-pane-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 9999px;
+    background: theme('colors.line');
+  }
+  .art-pane-label {
+    margin-left: auto;
+    font-family: theme('fontFamily.mono');
+    font-size: 10px;
+    color: theme('colors.muted');
+    letter-spacing: 0.04em;
+  }
+  .art-pane-label-out { margin-left: 0; }
+
+  .art-pane-body {
+    flex: 1;
+    padding: 0.75rem 0.9rem;
+    overflow: hidden;
+  }
+
+  /* ── Source: typewriter lines ──────────────────────────────────── */
+  .art-src .art-pane-body {
+    font-family: theme('fontFamily.mono');
+    font-size: 11px;
+    line-height: 1.65;
+    color: theme('colors.navy');
+  }
+  .art-line {
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  /*
+   * Each line's text starts at width:0 and animates to its natural
+   * width via the `ch` unit (set per line so the keyframe target
+   * matches the character count exactly). We can't use 100% because
+   * the parent is flex and the text content varies in length.
+   */
+  .art-line-text {
+    display: inline-block;
+    overflow: hidden;
+    width: 0;
+    white-space: nowrap;
+    animation-name: type;
+    animation-duration: 10s;
+    animation-timing-function: steps(40, end);
+    animation-iteration-count: infinite;
+    animation-fill-mode: forwards;
+  }
+  .art-line-1 .art-line-text { --target: 30ch; }
+  .art-line-2 .art-line-text { --target: 19ch; }
+  .art-line-3 .art-line-text { --target: 10ch; }
+  .art-line-4 .art-line-text { --target: 8ch; }
+  .art-line-5 .art-line-text { --target: 7ch; }
+  @keyframes type {
+    0%   { width: 0; }
+    8%   { width: var(--target, 20ch); }
+    100% { width: var(--target, 20ch); }
+  }
+  .art-line-1 .art-line-text { animation-delay: 0s; }
+  .art-line-2 .art-line-text { animation-delay: 1.5s; }
+  .art-line-3 .art-line-text { animation-delay: 2.9s; }
+  .art-line-4 .art-line-text { animation-delay: 3.6s; }
+  .art-line-5 .art-line-text { animation-delay: 4.3s; }
+
+  /*
+   * Caret. Sits next to each line; visible only while that line is
+   * actively typing. The handoff between lines is a chain of
+   * opacity-keyframed elements rather than one moving caret — simpler
+   * and cheaper than a transform animation.
+   */
+  .art-caret {
+    display: inline-block;
+    width: 1px;
+    height: 0.9em;
+    margin-left: 1px;
+    background: theme('colors.brand');
+    opacity: 0;
+    transform: translateY(0.1em);
+    animation: caret 10s linear infinite;
+  }
+  @keyframes caret {
+    0%, 100% { opacity: 0; }
+    /* On + blink window for each line, then off. */
+    1%, 9%  { opacity: 1; }
+    2%, 6%  { opacity: 0; }
+  }
+  /* Shift each caret's "on" window by the same delay used by its line. */
+  .art-caret-1 { animation-delay: 0s; }
+  .art-caret-2 { animation-delay: 1.5s; }
+  .art-caret-3 { animation-delay: 2.9s; }
+  .art-caret-4 { animation-delay: 3.6s; }
+  .art-caret-5 { animation-delay: 4.3s; }
+
+  /* ── Output: rendered preview ──────────────────────────────────── */
+  .art-out .art-pane-body-out {
+    background:
+      radial-gradient(circle at 100% 0%, rgba(30, 95, 255, 0.05), transparent 60%),
+      theme('colors.paper');
+  }
+
+  .art-out-h,
+  .art-out-p,
+  .art-out-li {
+    opacity: 0;
+    transform: translateY(4px);
+    animation: rise 10s ease-out infinite;
+  }
+  @keyframes rise {
+    0%, 100%      { opacity: 0; transform: translateY(4px); }
+    /* On for 60% of the cycle, fade in over a short window. */
+    8%, 80%       { opacity: 1; transform: translateY(0); }
+  }
+  /* Time each rendered element to land just as its source line finishes typing. */
+  .art-out-h        { animation-delay: 1.0s; }
+  .art-out-p        { animation-delay: 2.4s; }
+  .art-out-li-1     { animation-delay: 3.3s; }
+  .art-out-li-2     { animation-delay: 4.0s; }
+  .art-out-li-3     { animation-delay: 4.7s; }
+
+  .art-out-h {
+    font-family: theme('fontFamily.display');
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.2;
+    color: theme('colors.navy');
+    letter-spacing: -0.01em;
+  }
+  .art-out-p {
+    margin-top: 0.4rem;
+    font-size: 11px;
+    line-height: 1.55;
+    color: theme('colors.ink');
+    opacity: 0; /* overridden by keyframe */
+  }
+  .art-out-p strong {
+    color: theme('colors.navy');
+    background: linear-gradient(transparent 65%, rgba(30, 95, 255, 0.18) 65%);
+    padding: 0 0.1rem;
+  }
+  .art-out-list {
+    margin-top: 0.45rem;
+    padding-left: 0.9rem;
+    list-style: disc;
+  }
+  .art-out-li {
+    font-size: 11px;
+    line-height: 1.55;
+    color: theme('colors.ink');
+    opacity: 0;
+  }
+  .art-out-li::marker { color: theme('colors.brand'); }
+
+  /* ── "live" badge in the preview bar ──────────────────────────── */
+  .art-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-left: auto;
+    padding: 0.1rem 0.45rem;
+    border-radius: 9999px;
+    background: theme('colors.navy');
+    color: theme('colors.paper');
+    font-family: theme('fontFamily.mono');
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .art-live-dot {
+    width: 0.3rem;
+    height: 0.3rem;
+    border-radius: 9999px;
+    background: theme('colors.success');
+    animation: live-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes live-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.55); }
+    50%      { box-shadow: 0 0 0 4px rgba(5, 150, 105, 0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .art-line-text,
+    .art-caret,
+    .art-out-h,
+    .art-out-p,
+    .art-out-li,
+    .art-live-dot {
+      animation: none !important;
+    }
+    /* Snap to the finished state. */
+    .art-line-text { width: var(--target, 20ch); }
+    .art-caret { opacity: 0; }
+    .art-out-h,
+    .art-out-p,
+    .art-out-li {
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>
