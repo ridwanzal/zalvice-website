@@ -1,11 +1,17 @@
 import Fastify from 'fastify';
 import sensible from '@fastify/sensible';
+import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
+import formbody from '@fastify/formbody';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { env } from './lib/env.js';
+import sessionPlugin from './plugins/session.js';
 import { healthRoutes } from './routes/health.js';
 import { cmsRoutes } from './routes/cms.js';
+import { authRoutes } from './routes/auth.js';
+import { adminPostsRoutes } from './routes/admin-posts.js';
+import { adminProjectsRoutes } from './routes/admin-projects.js';
 
 async function build() {
   const fastify = Fastify({
@@ -24,8 +30,19 @@ async function build() {
   await fastify.register(cors, { origin: true, credentials: true });
   await fastify.register(rateLimit, { global: false, max: 300, timeWindow: '1 minute' });
 
+  // Cookie + session must come before any route that reads req.auth.
+  await fastify.register(cookie, { secret: env.SESSION_SECRET });
+  await fastify.register(formbody);
+  await fastify.register(sessionPlugin);
+
+  // Public reads.
   await fastify.register(healthRoutes, { prefix: '/api' });
   await fastify.register(cmsRoutes, { prefix: '/api/cms' });
+
+  // Admin auth + writes. All guarded inside each route file.
+  await fastify.register(authRoutes, { prefix: '/api/auth' });
+  await fastify.register(adminPostsRoutes, { prefix: '/api/admin/posts' });
+  await fastify.register(adminProjectsRoutes, { prefix: '/api/admin/projects' });
 
   return fastify;
 }

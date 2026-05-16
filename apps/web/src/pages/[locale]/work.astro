@@ -15,7 +15,7 @@ if (!isLocale(localeParam)) return Astro.redirect('/en');
 const locale: Locale = localeParam;
 const t = getDict(locale);
 
-const projects = await getProjects();
+const projects = await getProjects(locale);
 
 const pillarLabels: Record<string, string> = {
   design: t.contact.projectTypes.design,

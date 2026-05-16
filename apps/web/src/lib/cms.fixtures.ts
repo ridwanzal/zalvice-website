@@ -78,6 +78,7 @@ export const fixturePosts: CmsPostSummary[] = [
   {
     id: 1,
     slug: 'shipping-zero-downtime-mysql-migrations',
+    locale: 'en',
     title: 'Shipping zero-downtime MySQL migrations at any scale',
     excerpt:
       'Renames, FK changes, and column drops all become safe once you split them across deploys. The pattern we use on every client engagement.',
@@ -91,6 +92,7 @@ export const fixturePosts: CmsPostSummary[] = [
   {
     id: 2,
     slug: 'astro-islands-in-production',
+    locale: 'en',
     title: 'Astro islands in production — what we got right and wrong',
     excerpt:
       'After a year of building marketing sites on Astro, here is the short list of patterns we keep and the ones we threw out.',
@@ -104,6 +106,7 @@ export const fixturePosts: CmsPostSummary[] = [
   {
     id: 3,
     slug: 'pricing-discovery-engagements',
+    locale: 'en',
     title: 'How we price a discovery engagement',
     excerpt:
       'A short, opinionated take on scoping the first three weeks of any project — and the trap of skipping it.',
@@ -140,6 +143,7 @@ export const fixtureProjects: CmsProjectSummary[] = [
   {
     id: 1,
     slug: 'northwind-fleet-platform',
+    locale: 'en',
     clientName: 'Northwind Logistics',
     title: 'A real-time fleet platform that ships in 90 seconds',
     summary:
@@ -155,6 +159,7 @@ export const fixtureProjects: CmsProjectSummary[] = [
   {
     id: 2,
     slug: 'meridian-clinic-records',
+    locale: 'en',
     clientName: 'Meridian Health',
     title: 'A clinic records system clinicians actually like using',
     summary:
@@ -170,6 +175,7 @@ export const fixtureProjects: CmsProjectSummary[] = [
   {
     id: 3,
     slug: 'aperture-trading-desk',
+    locale: 'en',
     clientName: 'Aperture Capital',
     title: 'A trading desk built on sub-millisecond data',
     summary:
@@ -185,6 +191,7 @@ export const fixtureProjects: CmsProjectSummary[] = [
   {
     id: 4,
     slug: 'foundry-design-system',
+    locale: 'en',
     clientName: 'Foundry Studio',
     title: 'A design system that 14 product teams ship from',
     summary:
@@ -200,6 +207,7 @@ export const fixtureProjects: CmsProjectSummary[] = [
   {
     id: 5,
     slug: 'oak-ai-knowledge-base',
+    locale: 'en',
     clientName: 'Oak & Stone',
     title: 'A RAG-backed knowledge base their support team trusts',
     summary:
@@ -215,6 +223,7 @@ export const fixtureProjects: CmsProjectSummary[] = [
   {
     id: 6,
     slug: 'civic-grant-portal',
+    locale: 'en',
     clientName: 'Civic Initiative',
     title: 'A grant portal that quadrupled approvals per quarter',
     summary:

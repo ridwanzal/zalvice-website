@@ -1,6 +1,6 @@
 import { mysqlTable, int, varchar, boolean } from 'drizzle-orm/mysql-core';
 import { z } from 'zod';
-import { media } from './media';
+import { media } from './media.js';
 
 export const clients = mysqlTable('clients', {
   id: int('id').primaryKey().autoincrement(),

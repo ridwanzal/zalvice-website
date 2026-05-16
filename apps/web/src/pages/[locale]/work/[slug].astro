@@ -7,11 +7,16 @@ import { getProjects, getProjectBySlug } from '../../../lib/cms';
 import { LOCALES, getDict, isLocale, pathFor, type Locale } from '../../../lib/i18n';
 
 export async function getStaticPaths() {
-  const projects = await getProjects();
   // Cross product of locales × projects so every project pre-renders in
-  // both locales. Project copy itself is still English-only until the
-  // admin batch lands and we add locale-aware fixtures.
-  return LOCALES.flatMap((locale) =>
+  // both locales. In fixture mode the same project list ships under both
+  // locales; once live with translated content the lists will differ.
+  const perLocale = await Promise.all(
+    LOCALES.map(async (locale) => ({
+      locale,
+      projects: await getProjects(locale),
+    })),
+  );
+  return perLocale.flatMap(({ locale, projects }) =>
     projects.map((p) => ({ params: { locale, slug: p.slug } })),
   );
 }
@@ -21,12 +26,12 @@ if (!isLocale(localeParam)) return Astro.redirect('/en');
 const locale: Locale = localeParam;
 if (!slug) return Astro.redirect(pathFor(locale, '/work'));
 
-const project = await getProjectBySlug(slug);
+const project = await getProjectBySlug(locale, slug);
 if (!project) return Astro.redirect(pathFor(locale, '/404'));
 
 const t = getDict(locale);
 
-const all = await getProjects();
+const all = await getProjects(locale);
 const related = all
   .filter((p) => p.slug !== project.slug)
   .filter((p) => p.services.some((s) => project.services.includes(s)) || p.industry === project.industry)

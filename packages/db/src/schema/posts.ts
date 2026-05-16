@@ -9,7 +9,7 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/mysql-core';
 import { z } from 'zod';
-import { media } from './media';
+import { media } from './media.js';
 
 /*
  * Posts are single-locale per record. /en/blog/foo and /id/blog/foo are

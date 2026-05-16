@@ -58,6 +58,7 @@ export type CmsClient = z.infer<typeof ClientSchema>;
 const PostSummarySchema = z.object({
   id: z.number(),
   slug: z.string(),
+  locale: z.enum(['en', 'id']),
   title: z.string(),
   excerpt: z.string(),
   coverUrl: z.string().min(1).nullable(),
@@ -72,6 +73,7 @@ export type CmsPostSummary = z.infer<typeof PostSummarySchema>;
 const ProjectSummarySchema = z.object({
   id: z.number(),
   slug: z.string(),
+  locale: z.enum(['en', 'id']),
   clientName: z.string(),
   title: z.string(),
   summary: z.string(),
@@ -138,25 +140,49 @@ export async function getClients(opts?: { featuredOnly?: boolean }): Promise<Cms
   return fetchCms(`/clients${qs}`, z.array(ClientSchema), 'clients');
 }
 
-export async function getLatestPosts(limit = 3): Promise<CmsPostSummary[]> {
+/*
+ * Public reads. All locale-aware in live mode; fixture mode returns the
+ * same English-only set regardless because the fixtures aren't translated.
+ * The web pages always pass their current locale so live-mode swaps work
+ * automatically once the API is wired and content exists.
+ */
+
+type Locale = 'en' | 'id';
+
+export async function getLatestPosts(locale: Locale = 'en', limit = 3): Promise<CmsPostSummary[]> {
   if (env.CMS_MODE === 'fixture') return fixturePosts.slice(0, limit);
-  return fetchCms(`/posts/latest?limit=${limit}`, z.array(PostSummarySchema), 'posts');
+  return fetchCms(
+    `/posts/latest?locale=${locale}&limit=${limit}`,
+    z.array(PostSummarySchema),
+    'posts',
+  );
 }
 
-export async function getProjects(opts?: { featuredOnly?: boolean }): Promise<CmsProjectSummary[]> {
+export async function getProjects(
+  locale: Locale = 'en',
+  opts?: { featuredOnly?: boolean },
+): Promise<CmsProjectSummary[]> {
   if (env.CMS_MODE === 'fixture') {
     return opts?.featuredOnly ? fixtureProjects.filter((p) => p.featured) : fixtureProjects;
   }
-  const qs = opts?.featuredOnly ? '?featured=true' : '';
-  return fetchCms(`/projects${qs}`, z.array(ProjectSummarySchema), 'projects');
+  const params = new URLSearchParams({ locale });
+  if (opts?.featuredOnly) params.set('featured', 'true');
+  return fetchCms(`/projects?${params}`, z.array(ProjectSummarySchema), 'projects');
 }
 
-export async function getProjectBySlug(slug: string): Promise<CmsProjectDetail | null> {
+export async function getProjectBySlug(
+  locale: Locale,
+  slug: string,
+): Promise<CmsProjectDetail | null> {
   if (env.CMS_MODE === 'fixture') {
     return fixtureProjectDetails.find((p) => p.slug === slug) ?? null;
   }
   try {
-    return await fetchCms(`/projects/${slug}`, ProjectDetailSchema, 'project');
+    return await fetchCms(
+      `/projects/${slug}?locale=${locale}`,
+      ProjectDetailSchema,
+      'project',
+    );
   } catch (err) {
     if (err instanceof Error && err.message.includes('404')) return null;
     throw err;
