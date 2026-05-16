@@ -1,0 +1,409 @@
+---
+import { ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, Clock, Link as LinkIcon } from 'lucide-astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import { getAllPublishedPosts, getPostBySlug } from '../../../lib/cms';
+import { renderMarkdown } from '../../../lib/markdown';
+import { LOCALES, getDict, isLocale, pathFor, type Locale } from '../../../lib/i18n';
+
+export async function getStaticPaths() {
+  // Cross product of locales × posts. Each post is single-locale per row.
+  const perLocale = await Promise.all(
+    LOCALES.map(async (locale) => ({
+      locale,
+      posts: await getAllPublishedPosts(locale),
+    })),
+  );
+  return perLocale.flatMap(({ locale, posts }) =>
+    posts.map((p) => ({ params: { locale, slug: p.slug } })),
+  );
+}
+
+const { locale: localeParam, slug } = Astro.params;
+if (!isLocale(localeParam)) return Astro.redirect('/en');
+const locale: Locale = localeParam;
+if (!slug) return Astro.redirect(pathFor(locale, '/blog'));
+
+const post = await getPostBySlug(locale, slug);
+if (!post) return Astro.redirect(pathFor(locale, '/blog'));
+
+const t = getDict(locale);
+const bodyHtml = await renderMarkdown(post.bodyMd);
+
+// Related posts: prefer same-category siblings; if there aren't enough,
+// top up with the newest other posts so the section never goes empty
+// when there are siblings worth showing.
+const all = await getAllPublishedPosts(locale);
+const sameCategory = all.filter((p) => p.id !== post.id && p.category === post.category);
+const others = all.filter((p) => p.id !== post.id && p.category !== post.category);
+const related = [...sameCategory, ...others].slice(0, 3);
+
+// Compute author initials for the avatar fallback.
+const authorInitials = post.authorName
+  .split(' ')
+  .map((part) => part.charAt(0))
+  .slice(0, 2)
+  .join('')
+  .toUpperCase();
+
+const dateFmt = new Intl.DateTimeFormat(locale === 'id' ? 'id-ID' : 'en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+
+const seoTitle = post.seoTitle ?? `${post.title} — Zalvice`;
+const seoDescription = post.seoDescription ?? post.excerpt;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: post.title,
+  description: post.excerpt,
+  author: { '@type': 'Person', name: post.authorName },
+  datePublished: post.publishedAt,
+  image: post.coverUrl ? new URL(post.coverUrl, Astro.site).toString() : undefined,
+  inLanguage: locale,
+  articleSection: post.category,
+};
+---
+
+<BaseLayout
+  locale={locale}
+  title={seoTitle}
+  description={seoDescription}
+  ogImage={post.coverUrl ?? undefined}
+>
+  <Header slot="header" locale={locale} />
+
+  <article data-pagefind-body data-pagefind-meta={`category:${post.category}`}>
+    {/* Breadcrumb */}
+    <nav class="bg-paper" aria-label="Breadcrumb">
+      <div class="container py-6">
+        <a href={pathFor(locale, '/blog')} class="inline-flex items-center gap-2 font-mono text-xs text-muted hover:text-brand">
+          <ArrowLeft class="h-3.5 w-3.5" aria-hidden="true" />
+          {t.blog.detail.backToBlog}
+        </a>
+      </div>
+    </nav>
+
+    {/* Header */}
+    <header class="bg-paper">
+      <div class="container pb-12">
+        <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{post.category}</p>
+        <h1 class="mt-3 max-w-4xl font-display text-h1 font-bold leading-tight">
+          <span class="heading-gradient">{post.title}</span>
+        </h1>
+        <p class="mt-5 max-w-3xl text-lg text-ink/75 md:text-xl">{post.excerpt}</p>
+
+        <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-line pt-6">
+          <div class="flex items-center gap-2.5">
+            <span
+              aria-hidden="true"
+              class="flex h-9 w-9 items-center justify-center rounded-full bg-navy font-display text-xs font-bold text-paper"
+            >
+              {authorInitials}
+            </span>
+            <div>
+              <p class="font-mono text-[11px] uppercase tracking-wider text-muted">
+                {t.blog.detail.author}
+              </p>
+              <p class="text-sm font-medium text-navy">{post.authorName}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-sm text-ink/70">
+            <Clock class="h-4 w-4 text-muted" aria-hidden="true" />
+            <span>{dateFmt.format(new Date(post.publishedAt))}</span>
+          </div>
+          <div class="flex items-center gap-2 text-sm text-ink/70">
+            <BookOpen class="h-4 w-4 text-muted" aria-hidden="true" />
+            <span>{post.readingMinutes} {t.blog.readTimeUnit}</span>
+          </div>
+          <button
+            type="button"
+            data-copy-link
+            data-copied-text={t.blog.detail.copied}
+            class="ml-auto inline-flex items-center gap-2 rounded-full border border-line bg-paper px-3 py-1.5 font-mono text-[11px] text-navy hover:border-brand hover:text-brand"
+          >
+            <LinkIcon class="h-3.5 w-3.5" aria-hidden="true" />
+            <span data-copy-label>{t.blog.detail.copyLink}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Cover */}
+      <div class="container">
+        <div class="relative aspect-[16/8] overflow-hidden rounded-2xl bg-mist">
+          {
+            post.coverUrl ? (
+              <img
+                src={post.coverUrl}
+                alt={post.coverAlt ?? ''}
+                class="h-full w-full object-cover"
+                loading="eager"
+                fetchpriority="high"
+              />
+            ) : (
+              <div class="absolute inset-0 detail-cover-placeholder" aria-hidden="true">
+                <span class="absolute bottom-6 left-6 font-display text-3xl font-bold text-paper/90 md:text-4xl">
+                  {post.category}
+                </span>
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </header>
+
+    {/* Body */}
+    <section class="bg-paper py-16 md:py-20">
+      <div class="container">
+        <div class="prose-zalvice mx-auto max-w-3xl">
+          <Fragment set:html={bodyHtml} />
+        </div>
+      </div>
+    </section>
+
+    {/* Author bio */}
+    <section class="bg-mist py-12">
+      <div class="container">
+        <div class="mx-auto flex max-w-3xl items-start gap-4 rounded-2xl border border-line bg-paper p-6">
+          <span
+            aria-hidden="true"
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-navy font-display text-sm font-bold text-paper"
+          >
+            {authorInitials}
+          </span>
+          <div>
+            <p class="font-mono text-[11px] uppercase tracking-wider text-muted">
+              {t.blog.detail.author}
+            </p>
+            <p class="mt-0.5 font-display text-lg font-semibold text-navy">{post.authorName}</p>
+            <p class="mt-2 text-sm leading-relaxed text-ink/70">
+              From the Zalvice team. We write here when something we shipped is interesting enough
+              to be worth your time.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Related */}
+    {
+      related.length > 0 && (
+        <section class="bg-paper py-16 md:py-20" aria-labelledby="related-heading">
+          <div class="container">
+            <header class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+              <h2 id="related-heading" class="font-display text-2xl font-bold text-navy md:text-3xl">
+                {t.blog.detail.relatedHeading}
+              </h2>
+              <a
+                href={pathFor(locale, '/blog')}
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-navy hover:text-brand"
+              >
+                {t.blog.detail.moreFromCategory} {post.category}
+                <ArrowRight class="h-3.5 w-3.5" aria-hidden="true" />
+              </a>
+            </header>
+            <ul class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+              {related.map((r) => (
+                <li>
+                  <a
+                    href={pathFor(locale, `/blog/${r.slug}`)}
+                    class="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-paper transition-all hover:border-navy hover:shadow-[0_12px_36px_-16px_rgba(10,37,64,0.18)]"
+                  >
+                    <div class="relative aspect-[16/10] overflow-hidden bg-mist">
+                      <div class="absolute inset-0 related-cover" aria-hidden="true" />
+                      <span class="absolute left-4 top-4 rounded-full bg-paper/90 px-2.5 py-1 font-mono text-[11px] font-medium text-navy backdrop-blur">
+                        {r.category}
+                      </span>
+                    </div>
+                    <div class="flex flex-1 flex-col p-5">
+                      <h3 class="font-display text-base font-semibold text-navy group-hover:text-brand">
+                        {r.title}
+                      </h3>
+                      <span class="mt-auto inline-flex items-center gap-1 pt-4 text-sm font-medium text-brand">
+                        {t.blog.readPost}
+                        <ArrowUpRight class="h-3 w-3" aria-hidden="true" />
+                      </span>
+                    </div>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )
+    }
+  </article>
+
+  <Footer slot="footer" locale={locale} />
+
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
+</BaseLayout>
+
+<style>
+  .detail-cover-placeholder,
+  .related-cover {
+    background-image:
+      radial-gradient(circle at 80% 20%, theme('colors.brand') 0%, transparent 55%),
+      linear-gradient(135deg, theme('colors.navy') 0%, theme('colors.brand') 100%);
+  }
+
+  /*
+   * Styling for the markdown-rendered body. All selectors are :global
+   * because Fragment + set:html bypasses Astro's scoping. Order matches
+   * the HTML the unified pipeline emits.
+   */
+  .prose-zalvice {
+    color: theme('colors.ink');
+    font-size: 1.0625rem;
+    line-height: 1.75;
+  }
+
+  .prose-zalvice :global(p) {
+    margin-top: 1.25rem;
+    color: theme('colors.ink');
+    opacity: 0.85;
+  }
+  .prose-zalvice :global(p:first-child) { margin-top: 0; }
+
+  .prose-zalvice :global(h2) {
+    font-family: theme('fontFamily.display');
+    font-weight: 700;
+    font-size: 1.75rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: theme('colors.navy');
+    margin-top: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .prose-zalvice :global(h3) {
+    font-family: theme('fontFamily.display');
+    font-weight: 600;
+    font-size: 1.25rem;
+    line-height: 1.3;
+    color: theme('colors.navy');
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* rehype-autolink-headings wraps headings in <a class="heading-anchor">; strip default link styling. */
+  .prose-zalvice :global(.heading-anchor) {
+    color: inherit;
+    text-decoration: none;
+  }
+  .prose-zalvice :global(.heading-anchor:hover) {
+    color: theme('colors.brand');
+  }
+
+  .prose-zalvice :global(ul),
+  .prose-zalvice :global(ol) {
+    margin-top: 1rem;
+    padding-left: 1.5rem;
+  }
+  .prose-zalvice :global(ul) { list-style: disc; }
+  .prose-zalvice :global(ol) { list-style: decimal; }
+  .prose-zalvice :global(li) { margin-top: 0.375rem; opacity: 0.85; }
+  .prose-zalvice :global(li > p) { margin-top: 0; }
+
+  .prose-zalvice :global(a) {
+    color: theme('colors.brand');
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .prose-zalvice :global(a:hover) { color: theme('colors.navy'); }
+
+  .prose-zalvice :global(strong) { color: theme('colors.navy'); font-weight: 700; }
+  .prose-zalvice :global(em) { font-style: italic; }
+
+  .prose-zalvice :global(blockquote) {
+    margin-top: 1.5rem;
+    padding-left: 1rem;
+    border-left: 3px solid theme('colors.brand');
+    color: theme('colors.navy');
+    font-style: italic;
+  }
+
+  /* Inline code */
+  .prose-zalvice :global(:not(pre) > code) {
+    font-family: theme('fontFamily.mono');
+    font-size: 0.9em;
+    background: theme('colors.mist');
+    color: theme('colors.navy');
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+  }
+
+  /* Code blocks — shiki adds inline styles for syntax colours; we only
+     style the wrapper. */
+  .prose-zalvice :global(pre) {
+    margin-top: 1.5rem;
+    padding: 1rem 1.25rem;
+    border-radius: 0.75rem;
+    border: 1px solid theme('colors.line');
+    background: theme('colors.mist') !important;
+    overflow-x: auto;
+    font-size: 0.875rem;
+    line-height: 1.65;
+  }
+  .prose-zalvice :global(pre code) {
+    font-family: theme('fontFamily.mono');
+  }
+
+  /* Tables (remark-gfm) */
+  .prose-zalvice :global(table) {
+    width: 100%;
+    margin-top: 1.5rem;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+  .prose-zalvice :global(th),
+  .prose-zalvice :global(td) {
+    border-bottom: 1px solid theme('colors.line');
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+  }
+  .prose-zalvice :global(th) {
+    font-family: theme('fontFamily.mono');
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: theme('colors.muted');
+  }
+
+  .prose-zalvice :global(hr) {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    border: 0;
+    border-top: 1px solid theme('colors.line');
+  }
+</style>
+
+<script>
+  /* "Copy link" button on the article header. */
+  const btn = document.querySelector<HTMLButtonElement>('[data-copy-link]');
+  const label = document.querySelector<HTMLElement>('[data-copy-label]');
+  const original = label?.textContent ?? '';
+  const copied = btn?.getAttribute('data-copied-text') ?? 'Copied';
+
+  btn?.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      if (label) label.textContent = copied;
+      window.setTimeout(() => {
+        if (label) label.textContent = original;
+      }, 1600);
+    } catch {
+      // Clipboard may be blocked (insecure context, denied permission) — fall
+      // back to selecting the URL so the user can copy manually.
+      const input = document.createElement('input');
+      input.value = window.location.href;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      input.remove();
+    }
+  });
+</script>

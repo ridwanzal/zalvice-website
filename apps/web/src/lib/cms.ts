@@ -16,6 +16,7 @@ import {
   fixtureServices,
   fixtureClients,
   fixturePosts,
+  fixturePostDetails,
   fixtureProjects,
   fixtureProjectDetails,
   fixtureTeam,
@@ -68,8 +69,16 @@ const PostSummarySchema = z.object({
   authorName: z.string(),
   publishedAt: z.string(), // ISO 8601
   readingMinutes: z.number(),
+  featured: z.boolean(),
 });
 export type CmsPostSummary = z.infer<typeof PostSummarySchema>;
+
+const PostDetailSchema = PostSummarySchema.extend({
+  bodyMd: z.string(),
+  seoTitle: z.string().nullable(),
+  seoDescription: z.string().nullable(),
+});
+export type CmsPostDetail = z.infer<typeof PostDetailSchema>;
 
 const ProjectSummarySchema = z.object({
   id: z.number(),
@@ -163,6 +172,34 @@ export async function getClients(opts?: { featuredOnly?: boolean }): Promise<Cms
  */
 
 type Locale = 'en' | 'id';
+
+export async function getAllPublishedPosts(locale: Locale): Promise<CmsPostSummary[]> {
+  if (env.CMS_MODE === 'fixture') return fixturePosts.filter((p) => p.locale === locale);
+  return fetchCms(
+    `/posts?locale=${locale}`,
+    z.array(PostSummarySchema),
+    'posts',
+  );
+}
+
+export async function getPostBySlug(
+  locale: Locale,
+  slug: string,
+): Promise<CmsPostDetail | null> {
+  if (env.CMS_MODE === 'fixture') {
+    return fixturePostDetails.find((p) => p.locale === locale && p.slug === slug) ?? null;
+  }
+  try {
+    return await fetchCms(
+      `/posts/${slug}?locale=${locale}`,
+      PostDetailSchema,
+      'post',
+    );
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('404')) return null;
+    throw err;
+  }
+}
 
 export async function getLatestPosts(locale: Locale = 'en', limit = 3): Promise<CmsPostSummary[]> {
   if (env.CMS_MODE === 'fixture') return fixturePosts.slice(0, limit);

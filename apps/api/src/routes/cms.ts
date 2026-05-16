@@ -5,6 +5,8 @@ import {
   getDisplayableClients,
   getAllServices,
   getLatestPublishedPosts,
+  getAllPublishedPosts,
+  getPublishedPostBySlug,
   getPublishedProjects,
   getPublishedProjectBySlug,
   getActiveTeamMembers,
@@ -38,6 +40,18 @@ export async function cmsRoutes(fastify: FastifyInstance) {
     const { locale } = LocaleQuery.parse(req.query);
     const limit = Math.min(Number((req.query as { limit?: string }).limit ?? 3), 24);
     return { posts: await getLatestPublishedPosts(locale, limit) };
+  });
+
+  fastify.get('/posts', async (req) => {
+    const { locale } = LocaleQuery.parse(req.query);
+    return { posts: await getAllPublishedPosts(locale) };
+  });
+
+  fastify.get<{ Params: { slug: string } }>('/posts/:slug', async (req) => {
+    const { locale } = LocaleQuery.parse(req.query);
+    const post = await getPublishedPostBySlug(locale, req.params.slug);
+    if (!post) throw fastify.httpErrors.notFound('post not found');
+    return { post };
   });
 
   fastify.get('/projects', async (req) => {

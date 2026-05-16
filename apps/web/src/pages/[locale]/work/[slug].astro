@@ -4,6 +4,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
 import { getProjects, getProjectBySlug } from '../../../lib/cms';
+import { renderMarkdown } from '../../../lib/markdown';
 import { LOCALES, getDict, isLocale, pathFor, type Locale } from '../../../lib/i18n';
 
 export async function getStaticPaths() {
@@ -55,28 +56,7 @@ const jsonLd = {
   inLanguage: locale,
 };
 
-function renderSimpleMd(md: string): string {
-  const escape = (s: string) =>
-    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  return md
-    .split(/\n{2,}/)
-    .map((block) => {
-      const trimmed = block.trim();
-      if (!trimmed) return '';
-      if (trimmed.startsWith('## ')) return `<h2>${escape(trimmed.slice(3))}</h2>`;
-      if (trimmed.startsWith('# ')) return `<h2>${escape(trimmed.slice(2))}</h2>`;
-      if (/^[-*] /m.test(trimmed)) {
-        const items = trimmed
-          .split('\n')
-          .filter((l) => /^[-*] /.test(l))
-          .map((l) => `<li>${escape(l.replace(/^[-*] /, ''))}</li>`)
-          .join('');
-        return `<ul>${items}</ul>`;
-      }
-      return `<p>${escape(trimmed).replace(/\n/g, '<br />')}</p>`;
-    })
-    .join('\n');
-}
+const bodyHtml = await renderMarkdown(project.bodyMd);
 ---
 
 <BaseLayout
@@ -192,7 +172,7 @@ function renderSimpleMd(md: string): string {
     <section class="bg-mist py-16 md:py-24">
       <div class="container grid grid-cols-1 gap-10 lg:grid-cols-[2fr_1fr]">
         <div class="prose-zalvice">
-          <Fragment set:html={renderSimpleMd(project.bodyMd)} />
+          <Fragment set:html={bodyHtml} />
         </div>
         <aside class="space-y-6">
           <div class="rounded-2xl border border-line bg-paper p-6">

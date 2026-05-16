@@ -9,6 +9,7 @@ import type {
   CmsService,
   CmsClient,
   CmsPostSummary,
+  CmsPostDetail,
   CmsProjectSummary,
   CmsProjectDetail,
   CmsTeamMember,
@@ -89,6 +90,7 @@ export const fixturePosts: CmsPostSummary[] = [
     authorName: 'M. Ridwan Zalbina',
     publishedAt: '2026-05-12T09:00:00.000Z',
     readingMinutes: 6,
+    featured: true,
   },
   {
     id: 2,
@@ -103,6 +105,7 @@ export const fixturePosts: CmsPostSummary[] = [
     authorName: 'Zalvice Engineering',
     publishedAt: '2026-05-04T09:00:00.000Z',
     readingMinutes: 8,
+    featured: false,
   },
   {
     id: 3,
@@ -117,6 +120,137 @@ export const fixturePosts: CmsPostSummary[] = [
     authorName: 'Zalvice',
     publishedAt: '2026-04-22T09:00:00.000Z',
     readingMinutes: 4,
+    featured: false,
+  },
+];
+
+/*
+ * Long-form bodies for the three fixture posts. Real prose so the
+ * unified/remark/shiki pipeline has something to render — code blocks,
+ * H2/H3 headings (for the renderer's slug + anchor pass), bullet lists,
+ * inline code, an emphasis span. When the live admin lands these are
+ * replaced by DB rows.
+ */
+export const fixturePostDetails: CmsPostDetail[] = [
+  {
+    ...fixturePosts[0]!,
+    seoTitle: null,
+    seoDescription: null,
+    bodyMd: `## The pattern in one sentence
+
+Never change a column's shape and the code that reads it in the same deploy.
+
+That sentence covers every migration we ship — renames, type changes, NOT NULL additions, FK changes. The trick is splitting one logical change into a sequence of additive deploys, where every intermediate state is safe to run in production with mixed-version readers.
+
+## Renames
+
+Renaming a column is the most common version of this. Naive approach:
+
+\`\`\`sql
+ALTER TABLE projects RENAME COLUMN summary TO description;
+\`\`\`
+
+Run that on a live system and the previous-version app code still reading \`summary\` immediately throws. We do this instead:
+
+\`\`\`sql
+-- deploy 1
+ALTER TABLE projects ADD COLUMN description TEXT;
+UPDATE projects SET description = summary;
+\`\`\`
+
+Then the app starts writing to **both** columns. Then a deploy switches reads to \`description\`. Then a final deploy drops \`summary\`. Four deploys, zero downtime.
+
+## NOT NULL on an existing column
+
+Same shape — never \`ALTER COLUMN ... SET NOT NULL\` in the same migration that introduces a default for legacy rows. Backfill in a separate, batched script, *then* add the constraint.
+
+### Backfill script shape
+
+\`\`\`ts
+let lastSeen = 0;
+const batchSize = 1000;
+while (true) {
+  const rows = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(and(isNull(projects.description), gt(projects.id, lastSeen)))
+    .orderBy(asc(projects.id))
+    .limit(batchSize);
+  if (rows.length === 0) break;
+  await db.update(projects)
+    .set({ description: 'untitled' })
+    .where(inArray(projects.id, rows.map((r) => r.id)));
+  lastSeen = rows[rows.length - 1]!.id;
+  console.log(\`backfilled to id \${lastSeen}\`);
+}
+\`\`\`
+
+Idempotent, restartable, observable.
+
+## Why this matters
+
+If you only ever ship migrations on a maintenance-window basis, you can skip all this. We ship continuously, on PlanetScale, with mixed-version readers in flight at every deploy. The pattern above is the only one that's never bitten us.`,
+  },
+  {
+    ...fixturePosts[1]!,
+    seoTitle: null,
+    seoDescription: null,
+    bodyMd: `Astro's pitch — ship near-zero JS by default, hydrate only what needs it — works exactly as advertised. After a year shipping marketing sites and a backoffice on Astro 4, here's the short list.
+
+## What we kept
+
+### Default-static, opt-in SSR
+
+Every page is static unless we set \`export const prerender = false\`. The admin tree is the only thing in SSR mode. This single rule has done more for our build pipeline than any optimisation we layered on top.
+
+### \`client:visible\` over \`client:load\`
+
+\`client:load\` hydrates immediately on page load. \`client:visible\` defers until the island scrolls into view. We default to \`client:visible\` and only escalate when a feature must be interactive on first paint (the contact form is the only example so far).
+
+### Fixture-first CMS adapter
+
+\`CMS_MODE=fixture\` reads from a typed local file. \`CMS_MODE=live\` fetches from the API. Same Zod schema parses both, so drift fails the build. A fresh clone renders the whole site with no DB.
+
+## What we threw out
+
+### Heavy carousels
+
+Embla, Swiper, Splide — all add JS to do what CSS scroll-snap already does. The homepage Services carousel is 5 cards in a horizontal scroll-snap container. Zero JS, native momentum, accessibility for free.
+
+### Per-component CSS-in-JS
+
+We tried it for two weeks. It's not what Astro is built for. We're on Tailwind now and every component scopes its rare custom CSS in a \`<style>\` block inside the .astro file. The output is one CSS bundle, ~15KB gzip.
+
+### \`<Image>\` for everything
+
+Astro's \`<Image>\` is great for content images (responsive srcset, format conversion). For decorative SVG art and CSS-only animations, plain inline SVG is smaller and ships zero processing cost. We use \`<Image>\` only when the source dimensions matter.
+
+## One thing we're still arguing about
+
+View Transitions. They're elegant when they work but the cross-page state for the mobile nav and locale switcher gets messy. Probably re-evaluate at Astro 5.`,
+  },
+  {
+    ...fixturePosts[2]!,
+    seoTitle: null,
+    seoDescription: null,
+    bodyMd: `Every project we take on starts with a fixed-fee discovery sprint. Here is how we price it and why.
+
+## The shape
+
+- 1–3 weeks, depending on system complexity.
+- One designer, one engineer, partial-time lead.
+- Fixed fee — no scope-creep escalations.
+- Output: a written scope, an architecture sketch, a deployment plan, and an estimate for the build.
+
+## Why fixed fee
+
+Hourly billing on discovery creates the wrong incentive on both sides. You worry about the meter; we worry about scope. A fixed fee aligns interests on the deliverable: a plan good enough that the build estimate sits within ±15%.
+
+## The trap of skipping discovery
+
+We have, twice, agreed to skip it. Both projects went over budget by 60%+. The reason is always the same: the assumptions that didn't survive contact with the system.
+
+If you're tempted to skip — pick the smallest meaningful build instead of the full project. Two weeks of discovery is cheaper than two months of rework.`,
   },
 ];
 

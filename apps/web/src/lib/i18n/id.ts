@@ -190,6 +190,36 @@ export const dict: typeof en = {
       'Sebagian dari {count}+ tim yang mempercayakan pembangunan sistem yang mereka andalkan kepada kami.',
   },
 
+  blog: {
+    title: 'Blog — Zalvice',
+    description:
+      'Catatan engineering, infrastruktur, dan operasi dari proyek yang kami kerjakan. Ditulis oleh tim yang mengerjakannya.',
+    eyebrow: 'Blog',
+    headlineEmph: 'Catatan dari lantai build.',
+    intro:
+      'Catatan engineering, infrastruktur, dan operasi dari proyek yang kami kerjakan — ditulis oleh tim yang mengerjakannya.',
+    featuredEyebrow: 'Pilihan',
+    allCategory: 'Semua',
+    categoryLegend: 'Kategori',
+    emptyMessage: 'Tidak ada tulisan yang cocok dengan filter ini.',
+    resetCategory: 'Tampilkan semua',
+    readTimeUnit: 'menit baca',
+    searchPlaceholder: 'Cari tulisan…',
+    searchClear: 'Bersihkan',
+    countSuffix: 'tulisan',
+    readPost: 'Baca tulisan',
+    detail: {
+      backToBlog: 'Kembali ke blog',
+      author: 'Ditulis oleh',
+      published: 'Dipublikasikan',
+      shareLabel: 'Bagikan',
+      copyLink: 'Salin tautan',
+      copied: 'Tersalin',
+      relatedHeading: 'Baca berikutnya',
+      moreFromCategory: 'Lainnya di',
+    },
+  },
+
   about: {
     title: 'Tentang Kami — Zalvice',
     description:

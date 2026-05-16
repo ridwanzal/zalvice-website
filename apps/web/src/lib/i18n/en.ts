@@ -191,6 +191,36 @@ export const dict = {
       'A selection of the {count}+ teams who have trusted us to ship the systems they run on.',
   },
 
+  blog: {
+    title: 'Blog — Zalvice',
+    description:
+      'Engineering, infrastructure, and operating notes from work we have shipped. Written by the team that does the work.',
+    eyebrow: 'The blog',
+    headlineEmph: 'Notes from the build floor.',
+    intro:
+      'Engineering, infrastructure, and operating notes from work we have shipped — written by the team that did the work.',
+    featuredEyebrow: 'Featured',
+    allCategory: 'All',
+    categoryLegend: 'Category',
+    emptyMessage: 'No posts match this filter.',
+    resetCategory: 'Show all',
+    readTimeUnit: 'min read',
+    searchPlaceholder: 'Search posts…',
+    searchClear: 'Clear',
+    countSuffix: 'posts',
+    readPost: 'Read the post',
+    detail: {
+      backToBlog: 'Back to the blog',
+      author: 'Written by',
+      published: 'Published',
+      shareLabel: 'Share',
+      copyLink: 'Copy link',
+      copied: 'Copied',
+      relatedHeading: 'Read next',
+      moreFromCategory: 'More in',
+    },
+  },
+
   about: {
     title: 'About — Zalvice',
     description:

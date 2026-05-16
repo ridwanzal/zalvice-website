@@ -11,6 +11,14 @@ interface Props {
 const { title, description, ogImage, canonical, jsonLd, noindex } = Astro.props;
 const canonicalUrl = canonical ?? new URL(Astro.url.pathname, Astro.site).toString();
 const fullTitle = title.endsWith('Zalvice') ? title : `${title} — Zalvice`;
+
+/*
+ * OG image must be an absolute URL — Slack/LinkedIn scrapers reject
+ * relative paths. Resolve against Astro.site (PUBLIC_SITE_URL) so the
+ * value is right in every deploy environment. Pre-launch fallback is
+ * /favicon.png; swap to a dedicated 1200x630 OG image later.
+ */
+const ogImageUrl = new URL(ogImage ?? '/favicon.png', Astro.site).toString();
 ---
 
 <title>{fullTitle}</title>
@@ -18,10 +26,11 @@ const fullTitle = title.endsWith('Zalvice') ? title : `${title} — Zalvice`;
 <link rel="canonical" href={canonicalUrl} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
-<meta property="og:image" content={ogImage ?? '/og-default.png'} />
+<meta property="og:image" content={ogImageUrl} />
 <meta property="og:url" content={canonicalUrl} />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Zalvice" />
 <meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content={ogImageUrl} />
 {noindex && <meta name="robots" content="noindex,nofollow" />}
 {jsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}

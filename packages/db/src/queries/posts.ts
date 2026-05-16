@@ -14,6 +14,13 @@ export type PublicPostSummary = {
   authorName: string;
   publishedAt: string;
   readingMinutes: number;
+  featured: boolean;
+};
+
+export type PublicPostDetail = PublicPostSummary & {
+  bodyMd: string;
+  seoTitle: string | null;
+  seoDescription: string | null;
 };
 
 function toSummary(row: typeof posts.$inferSelect): PublicPostSummary {
@@ -29,6 +36,16 @@ function toSummary(row: typeof posts.$inferSelect): PublicPostSummary {
     authorName: row.authorName,
     publishedAt: (row.publishedAt ?? row.createdAt).toISOString(),
     readingMinutes: row.readingMinutes,
+    featured: row.featured,
+  };
+}
+
+function toDetail(row: typeof posts.$inferSelect): PublicPostDetail {
+  return {
+    ...toSummary(row),
+    bodyMd: row.bodyMd,
+    seoTitle: row.seoTitle ?? null,
+    seoDescription: row.seoDescription ?? null,
   };
 }
 
@@ -43,4 +60,34 @@ export async function getLatestPublishedPosts(
     .orderBy(desc(posts.publishedAt))
     .limit(limit);
   return rows.map(toSummary);
+}
+
+export async function getAllPublishedPosts(
+  locale: 'en' | 'id',
+): Promise<PublicPostSummary[]> {
+  const rows = await db
+    .select()
+    .from(posts)
+    .where(and(eq(posts.status, 'published'), eq(posts.locale, locale)))
+    .orderBy(desc(posts.publishedAt));
+  return rows.map(toSummary);
+}
+
+export async function getPublishedPostBySlug(
+  locale: 'en' | 'id',
+  slug: string,
+): Promise<PublicPostDetail | null> {
+  const rows = await db
+    .select()
+    .from(posts)
+    .where(
+      and(
+        eq(posts.status, 'published'),
+        eq(posts.locale, locale),
+        eq(posts.slug, slug),
+      ),
+    )
+    .limit(1);
+  const row = rows[0];
+  return row ? toDetail(row) : null;
 }

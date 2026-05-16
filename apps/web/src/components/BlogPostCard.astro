@@ -1,0 +1,114 @@
+---
+import { ArrowUpRight } from 'lucide-astro';
+import type { CmsPostSummary } from '../lib/cms';
+import { getDict, pathFor, type Locale } from '../lib/i18n';
+
+interface Props {
+  post: CmsPostSummary;
+  locale: Locale;
+  /** `featured` renders a larger 2-col card; `grid` renders the standard card. */
+  variant?: 'featured' | 'grid' | undefined;
+}
+
+const { post, locale, variant = 'grid' } = Astro.props;
+const t = getDict(locale);
+
+const dateFmt = new Intl.DateTimeFormat(locale === 'id' ? 'id-ID' : 'en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+
+const isFeatured = variant === 'featured';
+---
+
+<a
+  href={pathFor(locale, `/blog/${post.slug}`)}
+  class:list={[
+    'group flex overflow-hidden rounded-2xl border border-line bg-paper transition-all hover:border-navy hover:shadow-[0_12px_36px_-16px_rgba(10,37,64,0.18)]',
+    isFeatured ? 'flex-col md:flex-row' : 'flex-col',
+  ]}
+  data-pagefind-meta={`category:${post.category}`}
+  data-pagefind-meta-author={post.authorName}
+>
+  <div
+    class:list={[
+      'relative shrink-0 overflow-hidden bg-mist',
+      isFeatured ? 'aspect-[16/10] md:w-1/2 md:aspect-auto' : 'aspect-[16/10]',
+    ]}
+  >
+    {
+      post.coverUrl ? (
+        <img
+          src={post.coverUrl}
+          alt={post.coverAlt ?? ''}
+          loading="lazy"
+          decoding="async"
+          class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+        />
+      ) : (
+        <div class="absolute inset-0 blog-cover-placeholder" aria-hidden="true" />
+      )
+    }
+    <span class="absolute left-4 top-4 rounded-full bg-paper/90 px-2.5 py-1 font-mono text-[11px] font-medium text-navy backdrop-blur">
+      {post.category}
+    </span>
+  </div>
+
+  <div
+    class:list={[
+      'flex flex-1 flex-col p-6',
+      isFeatured && 'md:p-10',
+    ]}
+  >
+    <h3
+      class:list={[
+        'font-display font-semibold leading-snug text-navy group-hover:text-brand',
+        isFeatured ? 'text-2xl md:text-3xl' : 'text-lg',
+      ]}
+    >
+      {post.title}
+    </h3>
+    <p
+      class:list={[
+        'text-ink/70',
+        isFeatured ? 'mt-3 text-base leading-relaxed line-clamp-3' : 'mt-2 text-sm leading-relaxed line-clamp-2',
+      ]}
+    >
+      {post.excerpt}
+    </p>
+
+    <footer
+      class:list={[
+        'mt-auto flex items-center justify-between gap-3 pt-5 font-mono text-[11px] text-muted',
+        isFeatured && 'pt-8',
+      ]}
+    >
+      <span>{post.authorName}</span>
+      <span>
+        {dateFmt.format(new Date(post.publishedAt))} · {post.readingMinutes} {t.blog.readTimeUnit}
+      </span>
+    </footer>
+
+    {
+      isFeatured && (
+        <span class="mt-6 inline-flex items-center gap-1.5 self-start text-sm font-medium text-brand">
+          {t.blog.readPost}
+          <ArrowUpRight
+            class="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
+        </span>
+      )
+    }
+  </div>
+</a>
+
+<style>
+  .blog-cover-placeholder {
+    background-image:
+      radial-gradient(circle at 30% 20%, theme('colors.brand') 0%, transparent 45%),
+      linear-gradient(135deg, theme('colors.navy') 0%, theme('colors.brand') 100%);
+    opacity: 0.92;
+  }
+</style>
