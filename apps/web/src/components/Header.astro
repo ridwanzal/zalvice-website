@@ -1,4 +1,6 @@
 ---
+import MobileNav from './MobileNav.astro';
+
 const nav = [
   { href: '/services', label: 'Services' },
   { href: '/work', label: 'Work' },
@@ -46,12 +48,8 @@ const currentPath = Astro.url.pathname;
           </a>
         </li>
       </ul>
-      <a
-        href="/contact"
-        class="md:hidden inline-flex items-center rounded-full bg-brand px-3 py-1.5 text-sm text-paper"
-      >
-        Start
-      </a>
     </nav>
+
+    <MobileNav items={nav} currentPath={currentPath} />
   </div>
 </header>

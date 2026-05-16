@@ -1,0 +1,360 @@
+---
+import { ArrowRight, Mail, X, Menu, Github, Linkedin, Twitter } from 'lucide-astro';
+
+/*
+ * Full-viewport mobile nav. Replaces the prior "Start" button on
+ * <md screens. Hidden on md+ where the inline nav takes over.
+ *
+ * Mechanics (skills.md §12 patterns):
+ *   - Trigger button has aria-expanded + aria-controls.
+ *   - Backdrop + panel are .hidden by default so SSR is correct.
+ *   - Open: set data-open on the host; body gets overflow-hidden.
+ *   - Close: data-open removed; focus returned to the trigger.
+ *   - Esc, backdrop tap, swipe-left, and tapping a link all close.
+ *   - Focus is trapped between the close button and the last link.
+ *
+ * Animation respects prefers-reduced-motion via globals.css.
+ */
+
+type NavItem = { href: string; label: string };
+interface Props {
+  /** Nav items to render in the panel. */
+  items: NavItem[];
+  /** Current pathname for active-link styling. */
+  currentPath: string;
+}
+
+const { items, currentPath } = Astro.props as Props;
+
+const social = [
+  { href: 'https://www.linkedin.com/company/zalvice', label: 'LinkedIn', Icon: Linkedin },
+  { href: 'https://github.com/zalvice', label: 'GitHub', Icon: Github },
+  { href: 'https://x.com/zalvice', label: 'X', Icon: Twitter },
+];
+---
+
+<div class="md:hidden" data-mobile-nav>
+  {/* Trigger */}
+  <button
+    type="button"
+    aria-expanded="false"
+    aria-controls="mobile-nav-panel"
+    aria-label="Open menu"
+    class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-paper text-navy transition-colors hover:border-brand hover:text-brand"
+    data-mobile-nav-trigger
+  >
+    <Menu class="h-5 w-5" aria-hidden="true" />
+  </button>
+
+  {/* Backdrop */}
+  <div
+    class="mobile-nav-backdrop hidden"
+    data-mobile-nav-backdrop
+    aria-hidden="true"
+  >
+  </div>
+
+  {/* Panel */}
+  <aside
+    id="mobile-nav-panel"
+    class="mobile-nav-panel hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Site navigation"
+    tabindex="-1"
+    data-mobile-nav-panel
+  >
+    {/* Panel header */}
+    <header class="flex items-center justify-between px-5 pt-5">
+      <a href="/" class="inline-flex items-center" aria-label="Zalvice home" data-mobile-nav-link>
+        <img
+          src="/logos/logos.svg"
+          alt="Zalvice"
+          width="120"
+          height="40"
+          class="h-[1.875rem] w-auto"
+        />
+      </a>
+      <button
+        type="button"
+        aria-label="Close menu"
+        class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-paper text-navy transition-colors hover:border-brand hover:text-brand"
+        data-mobile-nav-close
+      >
+        <X class="h-5 w-5" aria-hidden="true" />
+      </button>
+    </header>
+
+    {/* Primary nav — oversized, generous spacing */}
+    <nav class="mt-10 px-5" aria-label="Primary">
+      <ul class="space-y-1">
+        {
+          items.map((item, i) => {
+            const isActive = currentPath === item.href || currentPath.startsWith(`${item.href}/`);
+            return (
+              <li>
+                <a
+                  href={item.href}
+                  data-mobile-nav-link
+                  class:list={[
+                    'group flex items-center justify-between rounded-2xl border border-transparent px-4 py-4 transition-colors',
+                    isActive
+                      ? 'border-line bg-mist'
+                      : 'hover:border-line hover:bg-mist',
+                  ]}
+                  style={`--stagger:${i * 40}ms`}
+                >
+                  <span class="flex items-baseline gap-3">
+                    <span class="font-mono text-[11px] tabular-nums text-muted">
+                      0{i + 1}
+                    </span>
+                    <span
+                      class:list={[
+                        'font-display text-2xl font-semibold transition-colors',
+                        isActive ? 'text-brand' : 'text-navy group-hover:text-brand',
+                      ]}
+                    >
+                      {item.label}
+                    </span>
+                  </span>
+                  <ArrowRight
+                    class="h-4 w-4 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-brand"
+                    aria-hidden="true"
+                  />
+                </a>
+              </li>
+            );
+          })
+        }
+      </ul>
+    </nav>
+
+    {/* Secondary block — pinned to the bottom */}
+    <div class="mt-auto px-5 pb-8">
+      <a
+        href="/contact"
+        data-mobile-nav-link
+        class="flex items-center justify-between gap-3 rounded-2xl bg-navy px-5 py-4 text-paper transition-colors hover:bg-brand"
+      >
+        <span>
+          <span class="block font-mono text-[11px] uppercase tracking-[0.14em] text-paper/70">
+            Ready to start?
+          </span>
+          <span class="mt-0.5 block font-display text-lg font-semibold">Start a project</span>
+        </span>
+        <ArrowRight class="h-5 w-5" aria-hidden="true" />
+      </a>
+
+      <a
+        href="mailto:hello@zalvice.com"
+        data-mobile-nav-link
+        class="mt-3 flex items-center gap-2.5 rounded-2xl border border-line bg-paper px-5 py-4 text-ink transition-colors hover:border-brand hover:text-brand"
+      >
+        <Mail class="h-4 w-4" aria-hidden="true" />
+        <span class="font-mono text-sm">hello@zalvice.com</span>
+      </a>
+
+      <ul class="mt-6 flex items-center gap-3">
+        {
+          social.map(({ href, label, Icon }) => (
+            <li>
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={label}
+                data-mobile-nav-link
+                class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line text-muted transition-colors hover:border-brand hover:text-brand"
+              >
+                <Icon class="h-4 w-4" aria-hidden="true" />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </aside>
+</div>
+
+<style>
+  .mobile-nav-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background-color: rgba(10, 37, 64, 0.45);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    opacity: 0;
+    transition: opacity 220ms ease-out;
+  }
+
+  .mobile-nav-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background-color: theme('colors.paper');
+    /* Slide in from the left (offcanvas-start). */
+    transform: translateX(-100%);
+    transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
+    /*
+     * Faint blueprint grid to echo the masthead — keeps the nav feeling
+     * like part of the same surface, not a generic overlay.
+     */
+    background-image:
+      linear-gradient(to right, rgba(10, 37, 64, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(10, 37, 64, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Open state — driven by data attribute on the host, set by the script. */
+  [data-mobile-nav][data-open] .mobile-nav-backdrop {
+    display: block;
+    opacity: 1;
+  }
+  [data-mobile-nav][data-open] .mobile-nav-panel {
+    display: flex;
+    transform: translateX(0);
+  }
+
+  /* Body lock — applied to <html> when any nav is open. */
+  :global(html[data-mobile-nav-open]) {
+    overflow: hidden;
+  }
+
+  /* Staggered link entrance — subtle, fast. Disabled under reduced motion. */
+  .mobile-nav-panel a[data-mobile-nav-link] {
+    opacity: 0;
+    transform: translateX(-6px);
+    transition:
+      opacity 220ms ease-out var(--stagger, 0ms),
+      transform 220ms ease-out var(--stagger, 0ms);
+  }
+  [data-mobile-nav][data-open] .mobile-nav-panel a[data-mobile-nav-link] {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mobile-nav-panel,
+    .mobile-nav-backdrop,
+    .mobile-nav-panel a[data-mobile-nav-link] {
+      transition: none !important;
+    }
+  }
+</style>
+
+<script>
+  /*
+   * One controller per <div data-mobile-nav>. Keeps the API local to the
+   * component so multiple instances on a page (unlikely, but) don't collide.
+   */
+  const HOST_ATTR = 'data-mobile-nav';
+  const OPEN_ATTR = 'data-open';
+
+  type Refs = {
+    host: HTMLElement;
+    trigger: HTMLButtonElement;
+    closer: HTMLButtonElement;
+    backdrop: HTMLElement;
+    panel: HTMLElement;
+    links: HTMLAnchorElement[];
+    lastFocus: HTMLElement | null;
+  };
+
+  function wire(host: HTMLElement) {
+    const triggerEl = host.querySelector<HTMLButtonElement>('[data-mobile-nav-trigger]');
+    const closerEl = host.querySelector<HTMLButtonElement>('[data-mobile-nav-close]');
+    const backdropEl = host.querySelector<HTMLElement>('[data-mobile-nav-backdrop]');
+    const panelEl = host.querySelector<HTMLElement>('[data-mobile-nav-panel]');
+    if (!triggerEl || !closerEl || !backdropEl || !panelEl) return;
+
+    const refs: Refs = {
+      host,
+      trigger: triggerEl,
+      closer: closerEl,
+      backdrop: backdropEl,
+      panel: panelEl,
+      links: Array.from(panelEl.querySelectorAll<HTMLAnchorElement>('a[data-mobile-nav-link]')),
+      lastFocus: null,
+    };
+
+    function open() {
+      refs.lastFocus = (document.activeElement as HTMLElement | null) ?? null;
+      refs.host.setAttribute(OPEN_ATTR, '');
+      document.documentElement.setAttribute('data-mobile-nav-open', '');
+      refs.trigger.setAttribute('aria-expanded', 'true');
+      window.requestAnimationFrame(() => refs.closer.focus());
+    }
+
+    function close() {
+      refs.host.removeAttribute(OPEN_ATTR);
+      document.documentElement.removeAttribute('data-mobile-nav-open');
+      refs.trigger.setAttribute('aria-expanded', 'false');
+      if (refs.lastFocus && document.contains(refs.lastFocus)) {
+        refs.lastFocus.focus();
+      } else {
+        refs.trigger.focus();
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (!refs.host.hasAttribute(OPEN_ATTR)) return;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close();
+        return;
+      }
+      if (event.key === 'Tab') {
+        const focusables: (HTMLButtonElement | HTMLAnchorElement)[] = [
+          refs.closer,
+          ...refs.links,
+        ].filter((el) => !!el && !el.hasAttribute('disabled'));
+        if (focusables.length === 0) return;
+        const first = focusables[0]!;
+        const last = focusables[focusables.length - 1]!;
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    // Swipe-left to close. Threshold 60px, must be more horizontal than vertical.
+    let touchStartX = 0;
+    let touchStartY = 0;
+    function onTouchStart(e: TouchEvent) {
+      const t = e.touches[0];
+      if (!t) return;
+      touchStartX = t.clientX;
+      touchStartY = t.clientY;
+    }
+    function onTouchEnd(e: TouchEvent) {
+      const t = e.changedTouches[0];
+      if (!t) return;
+      const dx = t.clientX - touchStartX;
+      const dy = Math.abs(t.clientY - touchStartY);
+      if (dx < -60 && dy < 40) close();
+    }
+
+    refs.trigger.addEventListener('click', open);
+    refs.closer.addEventListener('click', close);
+    refs.backdrop.addEventListener('click', close);
+    document.addEventListener('keydown', onKeyDown);
+    refs.panel.addEventListener('touchstart', onTouchStart, { passive: true });
+    refs.panel.addEventListener('touchend', onTouchEnd, { passive: true });
+    refs.links.forEach((a) => a.addEventListener('click', close));
+  }
+
+  document
+    .querySelectorAll<HTMLElement>(`[${HOST_ATTR}]`)
+    .forEach((host) => wire(host));
+</script>
