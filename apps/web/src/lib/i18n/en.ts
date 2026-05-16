@@ -540,6 +540,165 @@ export const dict = {
     ],
   },
 
+  /*
+   * Privacy + terms are specific to the data Zalvice actually collects on
+   * this site (PRD §10). They are NOT a substitute for legal review —
+   * the page itself surfaces a "draft, review before launch" note above
+   * the body. Each section is `{ heading, body }` where body is an
+   * array of paragraphs or `{ bullets: [...] }`.
+   */
+  privacy: {
+    title: 'Privacy Policy — Zalvice',
+    description:
+      'What data we collect on zalvice.com, why we collect it, and the third parties involved.',
+    eyebrow: 'Legal',
+    headlineEmph: 'Privacy policy.',
+    intro:
+      'This page describes what we collect on zalvice.com, why, and who we share it with. Plain language; no surprises.',
+    lastUpdatedLabel: 'Last updated',
+    lastUpdated: '2026-05-16',
+    draftNotice:
+      'This is a working draft. Have your lawyer review before launch.',
+    sections: [
+      {
+        heading: 'Who we are',
+        body: [
+          'Zalvice (PT Zalvice Digital Nusantara) operates zalvice.com from Jakarta, Indonesia. We are a small engineering and design team. For any privacy question you can reach us at hello@zalvice.com.',
+        ],
+      },
+      {
+        heading: 'What we collect from visitors',
+        body: [
+          'Browsing zalvice.com does not require an account and we do not use cookies for tracking. We only collect data when you actively send it to us.',
+          { bullets: [
+            'Contact form submissions: name, work email, company, optional phone, project type, budget range, timeline, message, and how you heard about us. We also capture the IP address and User-Agent of the submission, and any UTM parameters present on the page when you submitted.',
+            'Analytics: page views, scroll depth on case studies, CTA clicks. Collected via Plausible or Umami without cookies; no individual visitor is tracked across sessions.',
+            'Anti-bot: when you submit the contact form, Cloudflare Turnstile runs a check; this involves Cloudflare receiving your IP and a small set of browser signals to score the request.',
+          ] },
+        ],
+      },
+      {
+        heading: 'Why we collect it',
+        body: [
+          'Contact form data is used to reply to your enquiry. We do not add you to any marketing list and we do not share your details with parties outside the processors named below.',
+          'Analytics data is used to understand which pages are useful and which are not. It informs writing and design priorities; it is not used to target you.',
+          'Anti-bot data is used solely to filter automated submissions.',
+        ],
+      },
+      {
+        heading: 'Who we share it with',
+        body: [
+          'We use a small set of third-party processors. Each processor sees only the data needed for the function they perform.',
+          { bullets: [
+            'Resend — sends the confirmation email back to you and the notification email to our sales inbox. Receives your name and email.',
+            'Slack — receives a notification of new contact submissions in our internal #sales channel. The Slack message contains the same fields as the form.',
+            'Cloudflare — proxies the site (TLS, DDoS protection, image resizing) and runs Turnstile. Sees the standard HTTP-request information for every request and the Turnstile signal for form submissions.',
+            'Plausible or Umami — analytics. Cookie-less; aggregates only.',
+            'Cloudflare R2 — stores media we upload through the admin (logos, blog cover images). Public visitors see the URLs but do not interact with R2 directly.',
+            'PlanetScale or AWS RDS — managed MySQL hosting for the content database.',
+          ] },
+        ],
+      },
+      {
+        heading: 'How long we keep it',
+        body: [
+          'Contact submissions are kept indefinitely in our lead database for response and historical reference. You can ask us to delete your record at any time by emailing hello@zalvice.com — we will confirm the deletion in writing.',
+          'Database backups are kept for 30 days. Deleting a record removes it from the live database but the deletion propagates to backups within 30 days.',
+          'Analytics aggregates have no individual records to retain. They are kept for at most 24 months.',
+        ],
+      },
+      {
+        heading: 'Your rights',
+        body: [
+          'You can request a copy of every contact submission tied to your email, ask us to correct anything inaccurate, or ask us to delete the record entirely. Email hello@zalvice.com from the address on the submission and we will respond within five business days.',
+        ],
+      },
+      {
+        heading: 'Cookies',
+        body: [
+          'The marketing site uses no cookies for tracking. The admin section sets a single httpOnly session cookie when an administrator signs in; that cookie is invalidated on sign-out and is never accessible to public visitors.',
+        ],
+      },
+      {
+        heading: 'Security',
+        body: [
+          'All traffic is served over HTTPS. Passwords (for the internal admin only) are hashed with argon2id. Backups are encrypted at rest. We do not store payment information of any kind — there is no checkout on zalvice.com.',
+        ],
+      },
+      {
+        heading: 'Changes',
+        body: [
+          'If we change this policy, the "Last updated" date at the top will change. Material changes that affect existing submitters will be communicated directly by email.',
+        ],
+      },
+    ],
+  },
+
+  terms: {
+    title: 'Terms of Use — Zalvice',
+    description:
+      'The terms covering use of zalvice.com — the marketing website, not engagement contracts.',
+    eyebrow: 'Legal',
+    headlineEmph: 'Terms of use.',
+    intro:
+      'These terms cover use of the zalvice.com website. Engagement contracts (for actual project work) are separate and signed per project.',
+    lastUpdatedLabel: 'Last updated',
+    lastUpdated: '2026-05-16',
+    draftNotice:
+      'This is a working draft. Have your lawyer review before launch.',
+    sections: [
+      {
+        heading: 'About these terms',
+        body: [
+          'By using zalvice.com you agree to these terms. If you disagree with any of them, please stop using the site. These terms apply to the website only; project engagements are governed by a separate Master Services Agreement signed before work begins.',
+        ],
+      },
+      {
+        heading: 'Content ownership',
+        body: [
+          'All content on zalvice.com — copy, images, code samples, case studies, blog posts — is owned by PT Zalvice Digital Nusantara or used with permission. You may quote excerpts with attribution and a link back; you may not republish entire posts without written consent.',
+          'Client logos shown on the site appear with the explicit consent of each client. If you represent a client and want your logo removed, email hello@zalvice.com.',
+        ],
+      },
+      {
+        heading: 'Accuracy and warranties',
+        body: [
+          'We aim to keep the site accurate but make no guarantees. Information may be out of date or incomplete. Nothing on zalvice.com constitutes professional advice — engineering, legal, financial, or otherwise. Do not act on content here without confirming with a qualified professional and ideally a signed engagement.',
+        ],
+      },
+      {
+        heading: 'Acceptable use',
+        body: [
+          'Do not attempt to bypass authentication on /admin, scrape the site at a rate that constitutes abuse, submit fraudulent contact requests, or use the site to distribute malware. We reserve the right to block requests we judge to be abusive without notice.',
+        ],
+      },
+      {
+        heading: 'Third-party links',
+        body: [
+          'The site links to third-party services (Cal.com for booking, LinkedIn/GitHub for our profiles, blog posts may link to vendor documentation). Those services have their own terms; we are not responsible for their content.',
+        ],
+      },
+      {
+        heading: 'Liability',
+        body: [
+          'Zalvice is not liable for indirect or consequential losses arising from your use of the site. Direct losses are limited to the amount, if any, you have paid us for site-related services — which for the public site is zero.',
+        ],
+      },
+      {
+        heading: 'Governing law',
+        body: [
+          'These terms are governed by the laws of the Republic of Indonesia. Any dispute will be heard in the courts of South Jakarta.',
+        ],
+      },
+      {
+        heading: 'Changes',
+        body: [
+          'We may update these terms occasionally. The "Last updated" date at the top will change when we do. Continued use of the site after a change constitutes acceptance.',
+        ],
+      },
+    ],
+  },
+
   notFound: {
     title: '404 — Not found',
     headline: 'Page not found',

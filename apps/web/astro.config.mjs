@@ -16,7 +16,22 @@ export default defineConfig({
   integrations: [
     tailwind({ applyBaseStyles: false }),
     react(),
-    sitemap({ filter: (page) => !page.includes('/admin') && !page.includes('/api') }),
+    sitemap({
+      // Per-page <xhtml:link rel="alternate" hreflang="..."> entries.
+      // EN is the default locale (/ → /en redirect lives in `redirects`
+      // above), so /en URLs also carry hreflang="x-default".
+      i18n: {
+        defaultLocale: 'en',
+        locales: { en: 'en', id: 'id' },
+      },
+      // Exclude admin, the API proxy, and the bare /404 from the sitemap.
+      // /rss.xml is a feed, not a page — also out.
+      filter: (page) =>
+        !page.includes('/admin') &&
+        !page.includes('/api') &&
+        !page.includes('/404') &&
+        !page.includes('/rss.xml'),
+    }),
   ],
   server: { port: 4321, host: true },
   image: {

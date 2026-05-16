@@ -1,0 +1,83 @@
+---
+import { AlertTriangle } from 'lucide-astro';
+
+/*
+ * Shared layout for the legal pages (Privacy, Terms). Walks the
+ * `sections` array from the dict and renders each as a <section> with an
+ * H2 + paragraph/bullet content. The dict shape is mirrored between
+ * en.ts and id.ts so the same template works for both.
+ */
+
+type BulletBlock = { bullets: string[] };
+type BodyBlock = string | BulletBlock;
+type LegalSection = { heading: string; body: BodyBlock[] };
+
+interface Props {
+  eyebrow: string;
+  headlineEmph: string;
+  intro: string;
+  lastUpdatedLabel: string;
+  lastUpdated: string;
+  draftNotice: string;
+  sections: LegalSection[];
+}
+
+const { eyebrow, headlineEmph, intro, lastUpdatedLabel, lastUpdated, draftNotice, sections } =
+  Astro.props;
+
+function isBulletBlock(b: BodyBlock): b is BulletBlock {
+  return typeof b !== 'string';
+}
+---
+
+<article>
+  {/* Hero */}
+  <section class="bg-paper">
+    <div class="container py-16 md:py-20 lg:py-24">
+      <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{eyebrow}</p>
+      <h1 class="mt-3 max-w-3xl font-display text-h1 font-bold leading-tight">
+        <span class="heading-gradient">{headlineEmph}</span>
+      </h1>
+      <p class="mt-5 max-w-2xl text-lg text-ink/75 md:text-xl">{intro}</p>
+      <p class="mt-6 font-mono text-[11px] text-muted">
+        {lastUpdatedLabel}: <time datetime={lastUpdated}>{lastUpdated}</time>
+      </p>
+
+      <aside
+        role="note"
+        class="mt-8 flex items-start gap-3 rounded-2xl border border-line bg-mist px-5 py-4"
+      >
+        <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden="true" />
+        <p class="text-sm leading-relaxed text-ink/80">{draftNotice}</p>
+      </aside>
+    </div>
+  </section>
+
+  {/* Sections — each `body` block is either a paragraph string or a bullet list. */}
+  <section class="bg-paper pb-24">
+    <div class="container">
+      <div class="mx-auto max-w-3xl space-y-12">
+        {sections.map((s) => (
+          <section>
+            <h2 class="font-display text-2xl font-semibold leading-tight text-navy">
+              {s.heading}
+            </h2>
+            <div class="mt-4 space-y-4">
+              {s.body.map((block) =>
+                isBulletBlock(block) ? (
+                  <ul class="space-y-2 pl-5">
+                    {block.bullets.map((b) => (
+                      <li class="list-disc text-ink/80 leading-relaxed marker:text-brand">{b}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p class="text-ink/80 leading-relaxed">{block}</p>
+                ),
+              )}
+            </div>
+          </section>
+        ))}
+      </div>
+    </div>
+  </section>
+</article>

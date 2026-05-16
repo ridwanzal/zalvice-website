@@ -150,7 +150,7 @@ const social = [
         <li><a class="hover:text-paper" href={pathFor(locale, '/privacy')}>{t.footer.privacy}</a></li>
         <li><a class="hover:text-paper" href={pathFor(locale, '/terms')}>{t.footer.terms}</a></li>
         <li><a class="hover:text-paper" href="/sitemap-index.xml">{t.footer.sitemap}</a></li>
-        <li><a class="hover:text-paper" href="/rss.xml">{t.footer.rss}</a></li>
+        <li><a class="hover:text-paper" href={`/${locale}/rss.xml`}>{t.footer.rss}</a></li>
       </ul>
     </div>
   </div>

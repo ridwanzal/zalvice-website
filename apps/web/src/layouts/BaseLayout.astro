@@ -33,6 +33,12 @@ const skipToContent = locale === 'id' ? 'Lewati ke konten' : 'Skip to content';
     <meta name="theme-color" content="#1E5FFF" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/favicon.png" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={`Zalvice — ${locale === 'id' ? 'Blog (Bahasa Indonesia)' : 'Blog (English)'}`}
+      href={`/${locale}/rss.xml`}
+    />
     <SEO title={title} description={description} ogImage={ogImage} noindex={noindex} />
   </head>
   <body class="min-h-screen flex flex-col bg-paper text-ink">

@@ -536,6 +536,158 @@ export const dict: typeof en = {
     ],
   },
 
+  privacy: {
+    title: 'Kebijakan Privasi — Zalvice',
+    description:
+      'Data apa yang kami kumpulkan di zalvice.com, mengapa, dan pihak ketiga yang terlibat.',
+    eyebrow: 'Legal',
+    headlineEmph: 'Kebijakan privasi.',
+    intro:
+      'Halaman ini menjelaskan data apa yang kami kumpulkan di zalvice.com, untuk apa, dan dengan siapa kami membagikannya. Bahasa lugas; tanpa kejutan.',
+    lastUpdatedLabel: 'Terakhir diperbarui',
+    lastUpdated: '2026-05-16',
+    draftNotice:
+      'Ini adalah draft kerja. Mintalah review dari penasihat hukum sebelum peluncuran.',
+    sections: [
+      {
+        heading: 'Tentang kami',
+        body: [
+          'Zalvice (PT Zalvice Digital Nusantara) mengoperasikan zalvice.com dari Jakarta, Indonesia. Kami adalah tim engineering dan design yang ringkas. Untuk pertanyaan terkait privasi, hubungi kami di hello@zalvice.com.',
+        ],
+      },
+      {
+        heading: 'Apa yang kami kumpulkan dari pengunjung',
+        body: [
+          'Menjelajah zalvice.com tidak memerlukan akun dan kami tidak menggunakan cookie untuk pelacakan. Kami hanya mengumpulkan data ketika Anda secara aktif mengirimkannya kepada kami.',
+          { bullets: [
+            'Pengiriman form kontak: nama, email kantor, perusahaan, telepon (opsional), jenis proyek, rentang budget, timeline, pesan, dan dari mana Anda mengetahui kami. Kami juga mencatat alamat IP dan User-Agent saat pengiriman, serta parameter UTM yang ada di halaman ketika Anda mengirim.',
+            'Analytics: page view, scroll depth pada case study, klik CTA. Dikumpulkan via Plausible atau Umami tanpa cookie; tidak ada visitor individu yang dilacak antar sesi.',
+            'Anti-bot: ketika Anda mengirim form kontak, Cloudflare Turnstile melakukan pemeriksaan; ini berarti Cloudflare menerima IP Anda dan sejumlah kecil sinyal browser untuk menilai request.',
+          ] },
+        ],
+      },
+      {
+        heading: 'Mengapa kami mengumpulkannya',
+        body: [
+          'Data form kontak digunakan untuk membalas pertanyaan Anda. Kami tidak menambahkan Anda ke daftar marketing apa pun dan kami tidak membagikan data Anda ke pihak di luar prosesor yang disebut di bawah.',
+          'Data analytics digunakan untuk memahami halaman mana yang berguna dan mana yang tidak. Ini menjadi acuan prioritas tulisan dan desain; tidak digunakan untuk men-targeting Anda.',
+          'Data anti-bot hanya digunakan untuk menyaring pengiriman otomatis.',
+        ],
+      },
+      {
+        heading: 'Dengan siapa kami membagikannya',
+        body: [
+          'Kami menggunakan sekelompok kecil prosesor pihak ketiga. Masing-masing hanya melihat data yang diperlukan untuk fungsi yang mereka jalankan.',
+          { bullets: [
+            'Resend — mengirim email konfirmasi kepada Anda dan email notifikasi ke inbox sales kami. Menerima nama dan email Anda.',
+            'Slack — menerima notifikasi pengiriman form kontak baru di channel internal #sales. Pesan Slack berisi field yang sama dengan form.',
+            'Cloudflare — mem-proxy situs (TLS, perlindungan DDoS, image resizing) dan menjalankan Turnstile. Melihat informasi HTTP-request standar untuk setiap request dan sinyal Turnstile untuk pengiriman form.',
+            'Plausible atau Umami — analytics. Tanpa cookie; hanya agregat.',
+            'Cloudflare R2 — menyimpan media yang kami unggah melalui admin (logo, cover image blog). Pengunjung publik melihat URL-nya tetapi tidak berinteraksi langsung dengan R2.',
+            'PlanetScale atau AWS RDS — hosting MySQL terkelola untuk database konten.',
+          ] },
+        ],
+      },
+      {
+        heading: 'Berapa lama kami menyimpannya',
+        body: [
+          'Pengiriman kontak disimpan secara tidak terbatas di database lead kami untuk keperluan respons dan referensi historis. Anda dapat meminta kami menghapus record Anda kapan pun dengan mengirim email ke hello@zalvice.com — kami akan mengonfirmasi penghapusan secara tertulis.',
+          'Backup database disimpan selama 30 hari. Menghapus sebuah record akan menghilangkannya dari database live, tetapi penghapusan menjalar ke backup dalam 30 hari.',
+          'Agregat analytics tidak memiliki record individual untuk disimpan. Disimpan paling lama 24 bulan.',
+        ],
+      },
+      {
+        heading: 'Hak Anda',
+        body: [
+          'Anda dapat meminta salinan setiap pengiriman kontak yang terkait dengan email Anda, meminta kami memperbaiki yang tidak akurat, atau meminta penghapusan record sepenuhnya. Kirim email ke hello@zalvice.com dari alamat yang digunakan untuk pengiriman, dan kami akan merespons dalam lima hari kerja.',
+        ],
+      },
+      {
+        heading: 'Cookie',
+        body: [
+          'Situs marketing tidak menggunakan cookie untuk pelacakan. Bagian admin menyetel satu cookie sesi httpOnly ketika administrator masuk; cookie tersebut dibatalkan saat sign-out dan tidak pernah dapat diakses oleh pengunjung publik.',
+        ],
+      },
+      {
+        heading: 'Keamanan',
+        body: [
+          'Semua trafik disajikan melalui HTTPS. Password (hanya untuk admin internal) di-hash dengan argon2id. Backup dienkripsi saat at-rest. Kami tidak menyimpan informasi pembayaran apa pun — tidak ada checkout di zalvice.com.',
+        ],
+      },
+      {
+        heading: 'Perubahan',
+        body: [
+          'Bila kami mengubah kebijakan ini, tanggal "Terakhir diperbarui" di bagian atas akan berubah. Perubahan material yang memengaruhi pengirim yang sudah ada akan dikomunikasikan langsung melalui email.',
+        ],
+      },
+    ],
+  },
+
+  terms: {
+    title: 'Ketentuan Penggunaan — Zalvice',
+    description:
+      'Ketentuan terkait penggunaan zalvice.com — situs marketing, bukan kontrak engagement proyek.',
+    eyebrow: 'Legal',
+    headlineEmph: 'Ketentuan penggunaan.',
+    intro:
+      'Ketentuan ini mencakup penggunaan situs zalvice.com. Kontrak engagement (untuk pekerjaan proyek aktual) terpisah dan ditandatangani per proyek.',
+    lastUpdatedLabel: 'Terakhir diperbarui',
+    lastUpdated: '2026-05-16',
+    draftNotice:
+      'Ini adalah draft kerja. Mintalah review dari penasihat hukum sebelum peluncuran.',
+    sections: [
+      {
+        heading: 'Tentang ketentuan ini',
+        body: [
+          'Dengan menggunakan zalvice.com, Anda menyetujui ketentuan ini. Bila tidak setuju, mohon berhenti menggunakan situs. Ketentuan ini hanya berlaku untuk situs; engagement proyek diatur oleh Master Services Agreement terpisah yang ditandatangani sebelum pekerjaan dimulai.',
+        ],
+      },
+      {
+        heading: 'Kepemilikan konten',
+        body: [
+          'Seluruh konten di zalvice.com — copy, gambar, contoh kode, studi kasus, tulisan blog — dimiliki oleh PT Zalvice Digital Nusantara atau digunakan dengan izin. Anda boleh mengutip cuplikan dengan atribusi dan tautan balik; Anda tidak boleh menerbitkan ulang tulisan secara utuh tanpa izin tertulis.',
+          'Logo klien yang ditampilkan muncul atas persetujuan eksplisit dari masing-masing klien. Bila Anda mewakili klien dan ingin logo dihapus, kirim email ke hello@zalvice.com.',
+        ],
+      },
+      {
+        heading: 'Akurasi dan jaminan',
+        body: [
+          'Kami berupaya menjaga akurasi situs tetapi tidak memberikan jaminan. Informasi mungkin out of date atau tidak lengkap. Tidak ada konten di zalvice.com yang merupakan saran profesional — engineering, hukum, finansial, atau lainnya. Jangan bertindak berdasarkan konten di sini tanpa konfirmasi dari profesional yang berkualifikasi dan idealnya engagement yang ditandatangani.',
+        ],
+      },
+      {
+        heading: 'Penggunaan yang dapat diterima',
+        body: [
+          'Jangan mencoba mem-bypass autentikasi pada /admin, men-scrape situs pada tingkat yang merupakan penyalahgunaan, mengirim permintaan kontak palsu, atau menggunakan situs untuk mendistribusikan malware. Kami berhak memblokir request yang kami nilai sebagai penyalahgunaan tanpa pemberitahuan.',
+        ],
+      },
+      {
+        heading: 'Tautan pihak ketiga',
+        body: [
+          'Situs menautkan ke layanan pihak ketiga (Cal.com untuk booking, LinkedIn/GitHub untuk profil kami, tulisan blog mungkin menautkan ke dokumentasi vendor). Layanan tersebut memiliki ketentuan sendiri; kami tidak bertanggung jawab atas kontennya.',
+        ],
+      },
+      {
+        heading: 'Tanggung jawab',
+        body: [
+          'Zalvice tidak bertanggung jawab atas kerugian tidak langsung atau konsekuensial yang timbul dari penggunaan situs Anda. Kerugian langsung dibatasi pada jumlah, jika ada, yang telah Anda bayarkan kepada kami untuk layanan terkait situs — yang untuk situs publik adalah nol.',
+        ],
+      },
+      {
+        heading: 'Hukum yang berlaku',
+        body: [
+          'Ketentuan ini diatur oleh hukum Republik Indonesia. Setiap sengketa akan ditangani di Pengadilan Negeri Jakarta Selatan.',
+        ],
+      },
+      {
+        heading: 'Perubahan',
+        body: [
+          'Kami dapat memperbarui ketentuan ini sesekali. Tanggal "Terakhir diperbarui" di bagian atas akan berubah saat kami melakukannya. Penggunaan situs yang berkelanjutan setelah perubahan merupakan persetujuan.',
+        ],
+      },
+    ],
+  },
+
   notFound: {
     title: '404 — Tidak ditemukan',
     headline: 'Halaman tidak ditemukan',

@@ -1,0 +1,13 @@
+# Zalvice.com — robots.txt
+# Last touched: site-wide audit alongside sitemap + RSS rollout.
+#
+# Hard disallow: admin surface + the API proxy. Everything else is open.
+# Per-locale RSS feeds are linked in <head>; sitemap below covers all
+# public pages with hreflang alternates.
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api
+
+Sitemap: https://zalvice.com/sitemap-index.xml
