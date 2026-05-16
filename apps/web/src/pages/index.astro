@@ -12,7 +12,7 @@ import { getStats, getServices, getClients } from '../lib/cms';
 const [stats, services, clients] = await Promise.all([
   getStats(),
   getServices(),
-  getClients({ featuredOnly: true }),
+  getClients(),
 ]);
 ---
 

@@ -11,7 +11,15 @@ const currentPath = Astro.url.pathname;
 
 <header class="sticky top-0 z-40 bg-paper/90 backdrop-blur border-b border-line">
   <div class="container flex items-center justify-between py-4">
-    <a href="/" class="text-lg font-semibold text-navy" aria-label="Zalvice home">Zalvice</a>
+    <a href="/" class="inline-flex items-center" aria-label="Zalvice home">
+      <img
+        src="/logos/logos.png"
+        alt="Zalvice"
+        width="86"
+        height="25"
+        class="h-6 w-auto"
+      />
+    </a>
     <nav aria-label="Primary">
       <ul class="hidden md:flex items-center gap-6 text-sm">
         {
