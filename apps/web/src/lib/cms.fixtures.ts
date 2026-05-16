@@ -56,21 +56,17 @@ export const fixtureServices: CmsService[] = [
   },
 ];
 
-export const fixtureClients: CmsClient[] = [
-  'Acme Corp',
-  'Globex',
-  'Initech',
-  'Umbrella',
-  'Soylent',
-  'Stark Industries',
-  'Wayne Enterprises',
-  'Wonka',
-].map((name, i) => ({
-  id: i + 1,
-  name,
-  logoUrl: null,
-  logoAlt: null,
-  website: null,
-  industry: null,
-  featured: i < 6,
-}));
+// 24 client logos live in apps/web/public/clients/1.png … 24.png. Names are
+// placeholders; alt text intentionally empty pending real client names.
+export const fixtureClients: CmsClient[] = Array.from({ length: 24 }, (_, i) => {
+  const n = i + 1;
+  return {
+    id: n,
+    name: `Client ${n}`,
+    logoUrl: `/clients/${n}.png`,
+    logoAlt: '',
+    website: null,
+    industry: null,
+    featured: n <= 6,
+  };
+});

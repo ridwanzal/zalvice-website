@@ -17,7 +17,8 @@ export const clients = mysqlTable('clients', {
 export const ClientSchema = z.object({
   id: z.number(),
   name: z.string(),
-  logoUrl: z.string().url().nullable(),
+  // Accepts absolute (CDN/R2) URLs or root-relative paths (e.g. /clients/1.png).
+  logoUrl: z.string().min(1).nullable(),
   logoAlt: z.string().nullable(),
   website: z.string().nullable(),
   industry: z.string().nullable(),

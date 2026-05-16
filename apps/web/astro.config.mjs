@@ -17,4 +17,7 @@ export default defineConfig({
   image: {
     remotePatterns: [{ protocol: 'https', hostname: 'media.zalvice.com' }],
   },
+  vite: {
+    cacheDir: process.env.VITE_CACHE_DIR ?? undefined,
+  },
 });
