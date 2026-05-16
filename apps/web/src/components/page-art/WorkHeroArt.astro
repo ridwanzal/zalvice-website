@@ -1,0 +1,185 @@
+---
+/*
+ * /work hero art — a wireframe "system diagram" assembling itself.
+ *
+ * Visual: three labelled nodes (UI · API · DB) connected by edges and a
+ * CDN node sitting above the API. The edges draw themselves in order via
+ * stroke-dashoffset, the nodes pop in on a delay, and the finished
+ * assembly pulses softly so the piece never reads as "done and frozen."
+ *
+ * No images, no JS. Compositor-friendly (transform/opacity + stroke-
+ * dashoffset). Snaps to finished state under prefers-reduced-motion.
+ */
+---
+
+<div class="work-art" aria-hidden="true">
+  <svg viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg">
+    {/* Grid backdrop — drawn directly, not animated, just sets the mood. */}
+    <defs>
+      <pattern id="work-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" stroke-width="0.5" />
+      </pattern>
+    </defs>
+    <rect x="0" y="0" width="320" height="240" fill="url(#work-grid)" class="grid-layer" />
+
+    {/* Edges. drawn in order via per-class animation-delay. */}
+    <g class="edges" fill="none" stroke-linecap="round">
+      {/* UI → API */}
+      <path d="M 96 132 Q 130 132 160 132" class="edge edge-1" />
+      {/* API → DB */}
+      <path d="M 184 132 Q 220 132 244 132" class="edge edge-2" />
+      {/* CDN → API (vertical) */}
+      <path d="M 172 72 Q 172 100 172 120" class="edge edge-3" />
+    </g>
+
+    {/* Nodes */}
+    <g class="nodes">
+      {/* CDN */}
+      <g class="node node-cdn" transform="translate(150, 36)">
+        <rect width="44" height="32" rx="6" class="node-bg" />
+        <text x="22" y="20" text-anchor="middle" class="node-label">CDN</text>
+      </g>
+      {/* UI */}
+      <g class="node node-ui" transform="translate(56, 112)">
+        <rect width="40" height="40" rx="6" class="node-bg" />
+        <text x="20" y="25" text-anchor="middle" class="node-label">UI</text>
+      </g>
+      {/* API */}
+      <g class="node node-api" transform="translate(150, 112)">
+        <rect width="44" height="40" rx="6" class="node-bg node-bg--accent" />
+        <text x="22" y="25" text-anchor="middle" class="node-label node-label--paper">API</text>
+        {/* Pulse ring on the centre node */}
+        <rect width="44" height="40" rx="6" class="node-pulse" />
+      </g>
+      {/* DB */}
+      <g class="node node-db" transform="translate(244, 112)">
+        <rect width="40" height="40" rx="6" class="node-bg" />
+        <text x="20" y="25" text-anchor="middle" class="node-label">DB</text>
+      </g>
+    </g>
+
+    {/* Packet — a small dot that travels UI → API → DB on a loop. */}
+    <circle r="3" class="packet" />
+  </svg>
+</div>
+
+<style>
+  .work-art {
+    position: relative;
+    width: 100%;
+    max-width: 28rem;
+    aspect-ratio: 4 / 3;
+    color: theme('colors.navy');
+  }
+  .work-art svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .grid-layer {
+    color: theme('colors.navy');
+    opacity: 0.08;
+  }
+
+  /* ─── Edges: draw themselves on a stagger ──────────────────────────── */
+  .edge {
+    stroke: theme('colors.navy');
+    stroke-width: 1.5;
+    stroke-dasharray: 200;
+    stroke-dashoffset: 200;
+    opacity: 0.5;
+    animation: draw-edge 8s ease-in-out infinite;
+  }
+  .edge-1 { animation-delay: 0.4s; }
+  .edge-2 { animation-delay: 1.1s; }
+  .edge-3 { animation-delay: 1.8s; }
+  @keyframes draw-edge {
+    0%   { stroke-dashoffset: 200; opacity: 0; }
+    15%  { opacity: 0.5; }
+    35%  { stroke-dashoffset: 0;   opacity: 0.7; }
+    85%  { stroke-dashoffset: 0;   opacity: 0.7; }
+    100% { stroke-dashoffset: 0;   opacity: 0.7; }
+  }
+
+  /* ─── Nodes: pop in, then idle ─────────────────────────────────────── */
+  .node-bg {
+    fill: theme('colors.paper');
+    stroke: theme('colors.line');
+    stroke-width: 1;
+  }
+  .node-bg--accent {
+    fill: theme('colors.navy');
+    stroke: theme('colors.navy');
+  }
+  .node-label {
+    font-family: theme('fontFamily.mono');
+    font-size: 10px;
+    fill: theme('colors.navy');
+    letter-spacing: 0.04em;
+  }
+  .node-label--paper { fill: theme('colors.paper'); }
+
+  .node {
+    transform-origin: center;
+    transform-box: fill-box;
+    opacity: 0;
+    transform: scale(0.7);
+    animation: pop-node 8s ease-out infinite;
+  }
+  .node-ui  { animation-delay: 0.2s; }
+  .node-api { animation-delay: 0.9s; }
+  .node-db  { animation-delay: 1.6s; }
+  .node-cdn { animation-delay: 2.3s; }
+  @keyframes pop-node {
+    0%   { opacity: 0; transform: scale(0.7); }
+    8%   { opacity: 1; transform: scale(1); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* Centre node ring pulse — subtle, continuous */
+  .node-pulse {
+    fill: none;
+    stroke: theme('colors.brand');
+    stroke-width: 1.5;
+    opacity: 0;
+    transform-origin: center;
+    transform-box: fill-box;
+    animation: pulse-ring 3.2s ease-out infinite;
+    animation-delay: 2.8s;
+  }
+  @keyframes pulse-ring {
+    0%   { opacity: 0.6; transform: scale(1); }
+    100% { opacity: 0;   transform: scale(1.5); }
+  }
+
+  /* ─── Packet: traverses UI → API → DB on repeat ────────────────────── */
+  .packet {
+    fill: theme('colors.brand');
+    opacity: 0;
+    animation: packet 4s linear infinite;
+    animation-delay: 3s;
+  }
+  @keyframes packet {
+    0%   { opacity: 0; transform: translate(96px, 132px); }
+    5%   { opacity: 1; }
+    40%  { transform: translate(172px, 132px); }
+    45%  { opacity: 1; }
+    80%  { transform: translate(244px, 132px); opacity: 1; }
+    100% { transform: translate(244px, 132px); opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .edge,
+    .node,
+    .node-pulse,
+    .packet {
+      animation: none !important;
+    }
+    /* Snap to the finished state. */
+    .edge { stroke-dashoffset: 0; opacity: 0.7; }
+    .node { opacity: 1; transform: scale(1); }
+    .node-pulse { opacity: 0; }
+    .packet { opacity: 0; }
+  }
+</style>

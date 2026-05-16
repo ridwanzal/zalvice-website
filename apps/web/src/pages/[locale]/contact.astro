@@ -4,6 +4,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import { LOCALES, getDict, isLocale, pathFor, type Locale } from '../../lib/i18n';
+import ContactHeroArt from '../../components/page-art/ContactHeroArt.astro';
 
 export async function getStaticPaths() {
   return LOCALES.map((locale) => ({ params: { locale } }));
@@ -45,19 +46,26 @@ const timelines = [
   {/* Hero */}
   <section class="bg-paper">
     <div class="container py-16 md:py-20 lg:py-24">
-      <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{t.contact.eyebrow}</p>
-      <h1 class="mt-3 max-w-3xl font-display text-h1 font-bold leading-tight">
-        <span class="heading-gradient">{t.contact.headlineEmph}</span>
-      </h1>
-      <p class="mt-5 max-w-2xl text-lg text-ink/75 md:text-xl">{t.contact.intro}</p>
-      <ul class="mt-8 flex flex-wrap items-center gap-3 font-mono text-[11px]">
-        {t.contact.chips.map((chip, i) => (
-          <li class="inline-flex items-center gap-1.5 rounded-full border border-line bg-mist px-3 py-1.5 text-navy">
-            {i === 0 && <Clock class="h-3 w-3" aria-hidden="true" />}
-            {chip}
-          </li>
-        ))}
-      </ul>
+      <div class="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.4fr_1fr]">
+        <div>
+          <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{t.contact.eyebrow}</p>
+          <h1 class="mt-3 max-w-3xl font-display text-h1 font-bold leading-tight">
+            <span class="heading-gradient">{t.contact.headlineEmph}</span>
+          </h1>
+          <p class="mt-5 max-w-2xl text-lg text-ink/75 md:text-xl">{t.contact.intro}</p>
+          <ul class="mt-8 flex flex-wrap items-center gap-3 font-mono text-[11px]">
+            {t.contact.chips.map((chip, i) => (
+              <li class="inline-flex items-center gap-1.5 rounded-full border border-line bg-mist px-3 py-1.5 text-navy">
+                {i === 0 && <Clock class="h-3 w-3" aria-hidden="true" />}
+                {chip}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div class="ml-auto w-full">
+          <ContactHeroArt />
+        </div>
+      </div>
     </div>
   </section>
 

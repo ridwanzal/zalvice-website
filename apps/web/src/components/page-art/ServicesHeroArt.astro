@@ -1,0 +1,170 @@
+---
+/*
+ * /services hero art — five service pillars connecting into one
+ * constellation. Each pillar node fades in on a stagger, then lines
+ * draw between every pair to form a complete graph (K5). Once
+ * connected the whole network breathes (subtle scale pulse) to
+ * communicate "one integrated team."
+ *
+ * Pillars are placed at the five vertices of a regular pentagon so
+ * the network reads as a balanced shape, not a tree.
+ */
+---
+
+<div class="services-art" aria-hidden="true">
+  <svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+    {/*
+      Pentagon vertices around centre (160, 160), radius 100, starting
+      at the top and rotating clockwise.
+      Top      : (160, 60)
+      Right    : (255, 130)
+      Bot-R    : (220, 246)
+      Bot-L    : (100, 246)
+      Left     : (65,  130)
+    */}
+
+    <g class="network">
+      {/* Edges — K5 = 10 edges. Drawn in sequence; longer delays for the
+          inner cross-edges so the outer pentagon appears first. */}
+      <g class="edges" fill="none" stroke-linecap="round">
+        {/* Pentagon perimeter (5) */}
+        <line x1="160" y1="60"  x2="255" y2="130" class="edge edge-1" />
+        <line x1="255" y1="130" x2="220" y2="246" class="edge edge-2" />
+        <line x1="220" y1="246" x2="100" y2="246" class="edge edge-3" />
+        <line x1="100" y1="246" x2="65"  y2="130" class="edge edge-4" />
+        <line x1="65"  y1="130" x2="160" y2="60"  class="edge edge-5" />
+        {/* Cross-edges (5) — appear later */}
+        <line x1="160" y1="60"  x2="220" y2="246" class="edge edge-6 cross" />
+        <line x1="160" y1="60"  x2="100" y2="246" class="edge edge-7 cross" />
+        <line x1="255" y1="130" x2="100" y2="246" class="edge edge-8 cross" />
+        <line x1="255" y1="130" x2="65"  y2="130" class="edge edge-9 cross" />
+        <line x1="220" y1="246" x2="65"  y2="130" class="edge edge-10 cross" />
+      </g>
+
+      {/* Nodes */}
+      <g class="nodes">
+        <g class="node node-1" transform="translate(160, 60)">
+          <circle r="14" class="node-ring" />
+          <circle r="9"  class="node-dot" />
+        </g>
+        <g class="node node-2" transform="translate(255, 130)">
+          <circle r="14" class="node-ring" />
+          <circle r="9"  class="node-dot" />
+        </g>
+        <g class="node node-3" transform="translate(220, 246)">
+          <circle r="14" class="node-ring" />
+          <circle r="9"  class="node-dot" />
+        </g>
+        <g class="node node-4" transform="translate(100, 246)">
+          <circle r="14" class="node-ring" />
+          <circle r="9"  class="node-dot" />
+        </g>
+        <g class="node node-5" transform="translate(65, 130)">
+          <circle r="14" class="node-ring" />
+          <circle r="9"  class="node-dot" />
+        </g>
+      </g>
+    </g>
+  </svg>
+</div>
+
+<style>
+  .services-art {
+    position: relative;
+    width: 100%;
+    max-width: 26rem;
+    aspect-ratio: 1 / 1;
+  }
+  .services-art svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Whole network breathes once it's assembled. */
+  .network {
+    transform-origin: center;
+    transform-box: fill-box;
+    animation: breathe 6s ease-in-out 4.5s infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.02); }
+  }
+
+  /* Edges draw themselves in sequence. */
+  .edge {
+    stroke: theme('colors.navy');
+    stroke-width: 1.25;
+    stroke-dasharray: 260;
+    stroke-dashoffset: 260;
+    opacity: 0;
+    animation: draw 9s ease-out infinite;
+  }
+  .edge-1  { animation-delay: 0.4s; }
+  .edge-2  { animation-delay: 0.7s; }
+  .edge-3  { animation-delay: 1.0s; }
+  .edge-4  { animation-delay: 1.3s; }
+  .edge-5  { animation-delay: 1.6s; }
+  /* Cross-edges arrive last, render fainter so they don't drown the pentagon. */
+  .cross { stroke: theme('colors.brand'); }
+  .edge-6  { animation-delay: 2.2s; }
+  .edge-7  { animation-delay: 2.5s; }
+  .edge-8  { animation-delay: 2.8s; }
+  .edge-9  { animation-delay: 3.1s; }
+  .edge-10 { animation-delay: 3.4s; }
+  @keyframes draw {
+    0%   { stroke-dashoffset: 260; opacity: 0; }
+    10%  { opacity: 0.45; }
+    25%  { stroke-dashoffset: 0;   opacity: 0.55; }
+    100% { stroke-dashoffset: 0;   opacity: 0.55; }
+  }
+  .cross { opacity: 0; }
+  .cross.edge-6, .cross.edge-7, .cross.edge-8, .cross.edge-9, .cross.edge-10 {
+    /* Override end-state opacity for cross-edges. */
+    animation-name: draw-cross;
+  }
+  @keyframes draw-cross {
+    0%   { stroke-dashoffset: 260; opacity: 0; }
+    10%  { opacity: 0.2; }
+    25%  { stroke-dashoffset: 0;   opacity: 0.3; }
+    100% { stroke-dashoffset: 0;   opacity: 0.3; }
+  }
+
+  /* Nodes fade + scale in. */
+  .node {
+    transform-origin: center;
+    transform-box: fill-box;
+    opacity: 0;
+    transform: scale(0.6);
+    animation: pop 9s ease-out infinite;
+  }
+  .node-1 { animation-delay: 0.0s; }
+  .node-2 { animation-delay: 0.3s; }
+  .node-3 { animation-delay: 0.6s; }
+  .node-4 { animation-delay: 0.9s; }
+  .node-5 { animation-delay: 1.2s; }
+  @keyframes pop {
+    0%   { opacity: 0; transform: scale(0.6); }
+    6%   { opacity: 1; transform: scale(1); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .node-ring {
+    fill: theme('colors.paper');
+    stroke: theme('colors.line');
+    stroke-width: 1;
+  }
+  .node-dot {
+    fill: theme('colors.navy');
+  }
+  /* Centre-top node uses the brand colour to anchor the eye. */
+  .node-1 .node-dot { fill: theme('colors.brand'); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .network, .edge, .cross, .node { animation: none !important; }
+    .edge { stroke-dashoffset: 0; opacity: 0.55; }
+    .cross { opacity: 0.3; }
+    .node { opacity: 1; transform: scale(1); }
+  }
+</style>

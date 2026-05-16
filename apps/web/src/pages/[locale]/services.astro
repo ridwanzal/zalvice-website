@@ -13,6 +13,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import TechStackSection from '../../components/TechStackSection.astro';
+import ServicesHeroArt from '../../components/page-art/ServicesHeroArt.astro';
 import { getServices, getProjects } from '../../lib/cms';
 import { LOCALES, getDict, isLocale, pathFor, type Locale } from '../../lib/i18n';
 
@@ -76,33 +77,40 @@ const overlay = t.servicesPage.overlay as Record<string, Overlay | undefined>;
   <section class="relative overflow-hidden bg-paper">
     <div aria-hidden="true" class="absolute inset-0 opacity-[0.04] services-grid"></div>
     <div class="container relative py-20 md:py-28 lg:py-32">
-      <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{t.servicesPage.eyebrow}</p>
-      <h1 class="mt-3 max-w-4xl font-display text-h1 font-bold leading-tight">
-        <span class="heading-gradient">{t.servicesPage.headlineEmph}</span>
-        <span class="text-navy">{t.servicesPage.headlineRest}</span>
-      </h1>
-      <p class="mt-6 max-w-2xl text-lg text-ink/75 md:text-xl">{t.servicesPage.intro}</p>
+      <div class="grid grid-cols-1 items-center gap-12 lg:grid-cols-[1.4fr_1fr]">
+        <div>
+          <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{t.servicesPage.eyebrow}</p>
+          <h1 class="mt-3 max-w-4xl font-display text-h1 font-bold leading-tight">
+            <span class="heading-gradient">{t.servicesPage.headlineEmph}</span>
+            <span class="text-navy">{t.servicesPage.headlineRest}</span>
+          </h1>
+          <p class="mt-6 max-w-2xl text-lg text-ink/75 md:text-xl">{t.servicesPage.intro}</p>
 
-      <nav aria-label={t.servicesPage.pillarsNavLabel} class="mt-10">
-        <ul class="flex flex-wrap gap-2">
-          {
-            services.map((s) => {
-              const Icon = iconFor(s.icon);
-              return (
-                <li>
-                  <a
-                    href={`#${s.slug}`}
-                    class="inline-flex items-center gap-2 rounded-full border border-line bg-paper px-3.5 py-2 font-mono text-[11px] font-medium text-navy transition-colors hover:border-brand hover:text-brand"
-                  >
-                    <Icon class="h-3.5 w-3.5" aria-hidden="true" />
-                    {localizedServiceName(s.slug, s.name)}
-                  </a>
-                </li>
-              );
-            })
-          }
-        </ul>
-      </nav>
+          <nav aria-label={t.servicesPage.pillarsNavLabel} class="mt-10">
+            <ul class="flex flex-wrap gap-2">
+              {
+                services.map((s) => {
+                  const Icon = iconFor(s.icon);
+                  return (
+                    <li>
+                      <a
+                        href={`#${s.slug}`}
+                        class="inline-flex items-center gap-2 rounded-full border border-line bg-paper px-3.5 py-2 font-mono text-[11px] font-medium text-navy transition-colors hover:border-brand hover:text-brand"
+                      >
+                        <Icon class="h-3.5 w-3.5" aria-hidden="true" />
+                        {localizedServiceName(s.slug, s.name)}
+                      </a>
+                    </li>
+                  );
+                })
+              }
+            </ul>
+          </nav>
+        </div>
+        <div class="ml-auto w-full">
+          <ServicesHeroArt />
+        </div>
+      </div>
     </div>
   </section>
 

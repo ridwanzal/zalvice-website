@@ -6,6 +6,7 @@ import Footer from '../../components/Footer.astro';
 import TeamMemberCard from '../../components/TeamMemberCard.astro';
 import ClientsWall from '../../components/ClientsWall.astro';
 import TestimonialsSection from '../../components/TestimonialsSection.astro';
+import AboutHeroArt from '../../components/page-art/AboutHeroArt.astro';
 import {
   getTeamMembers,
   getStats,
@@ -60,32 +61,35 @@ const tenureSuffix = locale === 'id' ? 'thn' : 'yrs';
           </h1>
           <p class="mt-6 max-w-2xl text-lg text-ink/75 md:text-xl">{t.about.intro}</p>
         </div>
-        <dl class="grid grid-cols-2 gap-6 border-l border-line pl-8">
-          <div>
-            <dt class="font-mono text-[11px] uppercase tracking-wider text-muted">{t.about.founded}</dt>
-            <dd class="mt-1 font-display text-3xl font-bold text-navy">
-              {yearsInOperation ? `${new Date().getFullYear() - yearsInOperation.value}` : '2018'}
-            </dd>
-          </div>
-          <div>
-            <dt class="font-mono text-[11px] uppercase tracking-wider text-muted">{t.about.clients}</dt>
-            <dd class="mt-1 font-display text-3xl font-bold text-navy">
-              {companiesServed ? companiesServed.value : 100}
-              <span class="text-brand">{companiesServed?.suffix ?? '+'}</span>
-            </dd>
-          </div>
-          <div>
-            <dt class="font-mono text-[11px] uppercase tracking-wider text-muted">{t.about.teamLabel}</dt>
-            <dd class="mt-1 font-display text-3xl font-bold text-navy">{team.length}</dd>
-          </div>
-          <div>
-            <dt class="font-mono text-[11px] uppercase tracking-wider text-muted">{t.about.avgTenure}</dt>
-            <dd class="mt-1 font-display text-3xl font-bold text-navy">
-              {Math.round(team.reduce((a, m) => a + m.yearsExperience, 0) / team.length)}
-              <span class="text-brand">{tenureSuffix}</span>
-            </dd>
-          </div>
-        </dl>
+        <div class="space-y-8">
+          <AboutHeroArt />
+          <dl class="grid grid-cols-2 gap-6 border-t border-line pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+            <div>
+              <dt class="font-mono text-[11px] uppercase tracking-wider text-muted">{t.about.founded}</dt>
+              <dd class="mt-1 font-display text-3xl font-bold text-navy">
+                {yearsInOperation ? `${new Date().getFullYear() - yearsInOperation.value}` : '2018'}
+              </dd>
+            </div>
+            <div>
+              <dt class="font-mono text-[11px] uppercase tracking-wider text-muted">{t.about.clients}</dt>
+              <dd class="mt-1 font-display text-3xl font-bold text-navy">
+                {companiesServed ? companiesServed.value : 100}
+                <span class="text-brand">{companiesServed?.suffix ?? '+'}</span>
+              </dd>
+            </div>
+            <div>
+              <dt class="font-mono text-[11px] uppercase tracking-wider text-muted">{t.about.teamLabel}</dt>
+              <dd class="mt-1 font-display text-3xl font-bold text-navy">{team.length}</dd>
+            </div>
+            <div>
+              <dt class="font-mono text-[11px] uppercase tracking-wider text-muted">{t.about.avgTenure}</dt>
+              <dd class="mt-1 font-display text-3xl font-bold text-navy">
+                {Math.round(team.reduce((a, m) => a + m.yearsExperience, 0) / team.length)}
+                <span class="text-brand">{tenureSuffix}</span>
+              </dd>
+            </div>
+          </dl>
+        </div>
       </div>
     </div>
   </section>

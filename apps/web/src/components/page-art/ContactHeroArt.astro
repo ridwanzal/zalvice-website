@@ -1,0 +1,149 @@
+---
+/*
+ * /contact hero art — signal/handshake. A "you" node on the left and a
+ * "team" node on the right, connected by a horizontal wire. A pulse
+ * dot travels left→right (outgoing message), then a return pulse
+ * travels right→left (the reply within one business day, per the
+ * page's promise). Both nodes ring softly when their packet arrives.
+ *
+ * Communicates the back-and-forth of a discovery call without leaning
+ * on a literal handshake icon.
+ */
+---
+
+<div class="contact-art" aria-hidden="true">
+  <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+    {/* Wire — solid horizontal line, with a dashed overlay that shifts to
+        suggest data is flowing even between packets. */}
+    <line x1="56" y1="90" x2="264" y2="90" class="wire" />
+    <line x1="56" y1="90" x2="264" y2="90" class="wire wire-dash" />
+
+    {/* Endpoint A — "you" */}
+    <g transform="translate(56, 90)">
+      <circle r="22" class="endpoint-ring endpoint-ring-a" />
+      <circle r="14" class="endpoint" />
+      <text x="0" y="48" text-anchor="middle" class="label">you</text>
+    </g>
+
+    {/* Endpoint B — "us" */}
+    <g transform="translate(264, 90)">
+      <circle r="22" class="endpoint-ring endpoint-ring-b" />
+      <circle r="14" class="endpoint endpoint--accent" />
+      <text x="0" y="48" text-anchor="middle" class="label">us</text>
+    </g>
+
+    {/* Outgoing packet — left to right */}
+    <circle cy="90" r="5" class="packet packet-out" />
+    {/* Return packet — right to left, delayed */}
+    <circle cy="90" r="5" class="packet packet-in" />
+  </svg>
+</div>
+
+<style>
+  .contact-art {
+    position: relative;
+    width: 100%;
+    max-width: 28rem;
+    aspect-ratio: 16 / 9;
+  }
+  .contact-art svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* ─── Wire ──────────────────────────────────────────────────────────── */
+  .wire {
+    stroke: theme('colors.line');
+    stroke-width: 1.5;
+  }
+  .wire-dash {
+    stroke: theme('colors.brand');
+    stroke-width: 1;
+    stroke-dasharray: 4 8;
+    opacity: 0.5;
+    animation: wire-flow 3s linear infinite;
+  }
+  @keyframes wire-flow {
+    from { stroke-dashoffset: 0; }
+    to   { stroke-dashoffset: -24; }
+  }
+
+  /* ─── Endpoints ─────────────────────────────────────────────────────── */
+  .endpoint {
+    fill: theme('colors.paper');
+    stroke: theme('colors.navy');
+    stroke-width: 1.5;
+  }
+  .endpoint--accent {
+    fill: theme('colors.navy');
+    stroke: theme('colors.navy');
+  }
+  .endpoint-ring {
+    fill: none;
+    stroke: theme('colors.brand');
+    stroke-width: 1.5;
+    opacity: 0;
+    transform-origin: center;
+    transform-box: fill-box;
+  }
+  /* Ring A pulses when the return packet arrives (~delay timing) */
+  .endpoint-ring-a {
+    animation: ring-pulse 6s ease-out infinite;
+    animation-delay: 4.2s;
+  }
+  /* Ring B pulses when the outgoing packet arrives */
+  .endpoint-ring-b {
+    animation: ring-pulse 6s ease-out infinite;
+    animation-delay: 1.5s;
+  }
+  @keyframes ring-pulse {
+    0%   { opacity: 0.6; transform: scale(0.8); }
+    100% { opacity: 0;   transform: scale(1.4); }
+  }
+
+  /* ─── Packets ───────────────────────────────────────────────────────── */
+  .packet {
+    fill: theme('colors.brand');
+    opacity: 0;
+  }
+  .packet-out {
+    animation: packet-out 6s ease-in-out infinite;
+  }
+  @keyframes packet-out {
+    0%   { opacity: 0; transform: translateX(56px); }
+    5%   { opacity: 1; }
+    25%  { transform: translateX(264px); opacity: 1; }
+    30%  { opacity: 0; }
+    100% { opacity: 0; }
+  }
+  .packet-in {
+    animation: packet-in 6s ease-in-out infinite;
+    animation-delay: 0s;
+  }
+  @keyframes packet-in {
+    0%, 50% { opacity: 0; transform: translateX(264px); }
+    55%     { opacity: 1; }
+    75%     { transform: translateX(56px); opacity: 1; }
+    80%     { opacity: 0; }
+    100%    { opacity: 0; }
+  }
+
+  /* ─── Labels ────────────────────────────────────────────────────────── */
+  .label {
+    font-family: theme('fontFamily.mono');
+    font-size: 11px;
+    fill: theme('colors.muted');
+    letter-spacing: 0.06em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wire-dash,
+    .endpoint-ring,
+    .packet {
+      animation: none !important;
+    }
+    .endpoint-ring { opacity: 0; }
+    .packet { opacity: 0; }
+  }
+</style>
