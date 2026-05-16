@@ -390,6 +390,8 @@ Things that bit us once. Each row is a rule with the reason in parentheses so fu
 - **Admin is SSR with `export const prerender = false`.** The Node adapter handles every `/admin/*` request, validates the session by forwarding the cookie to `/api/auth/me`, and renders the page. No client state, no React. Forms POST directly to `/api/admin/...` which 303-redirects back.
 - **drizzle-kit can't follow `.js` re-exports in CJS resolve mode.** Workaround: `drizzle.config.ts` points `schema` at the glob `./src/schema/*.ts` so it bypasses `index.ts`. The runtime keeps `.js` extensions because `apps/api` is NodeNext.
 - **API form-vs-JSON dispatch on the auth login route.** When `Accept: text/html`, failures 303-redirect to `/admin/login?error=1&redirect=...`; otherwise the standard Fastify `httpErrors` JSON shape is returned. Keep this dispatch in mind when adding new admin routes — HTML form posts are the primary call path.
+- **Optional FK fields from HTML forms come in as empty strings, not undefined.** Pattern: a Zod transform that maps `'' | null | undefined → null` and parses numbers. See `ProjectIdField` in `apps/api/src/routes/admin-testimonials.ts`. Any time an admin form has a `<select>` whose first option is "— None —", you need this.
+- **Drizzle migration generation requires stripping `.js` extensions from schema imports first.** The drizzle-kit CJS loader can't resolve them. Workflow: `sed -i "s|from './\\([a-z-]*\\)\\.js'|from './\\1'|g"` over `packages/db/src/schema/*.ts`, run `pnpm db:generate`, then restore. Captured under `skills.md` §27 as a checklist.
 
 ## When you're stuck
 

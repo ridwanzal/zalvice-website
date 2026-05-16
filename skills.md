@@ -34,6 +34,7 @@ Each section is a **skill** — a self-contained pattern you can apply when impl
 24. [Logo marquee — CSS-only, two-row, edge-fade](#24-logo-marquee)
 25. [Scroll-snap carousel — when not to use a JS carousel](#25-scroll-snap-carousel)
 26. [Mobile offcanvas nav — full-viewport, frosted, no framework](#26-mobile-offcanvas-nav)
+27. [Generating Drizzle migrations — the .js-extension workaround](#27-generating-drizzle-migrations)
 
 ---
 
@@ -1358,6 +1359,48 @@ function close() {
 Reference: `apps/web/src/components/MobileNav.astro` (wired into `Header.astro`).
 
 ---
+
+## 27. Generating Drizzle migrations
+
+**Goal:** add a column or table, generate the migration SQL, commit both. Should be a 30-second operation; in this repo it isn't, because drizzle-kit's CJS loader can't resolve our `.js` extension imports.
+
+**Checklist:**
+
+```bash
+# 1. Edit the schema file under packages/db/src/schema/*.ts.
+#    Keep `.js` extensions in imports — they're required at runtime.
+
+# 2. Temporarily strip the .js suffixes so drizzle-kit's loader
+#    can find the modules. This is the workaround documented in
+#    CLAUDE.md "Conventions discovered in build."
+cd packages/db/src/schema
+for f in *.ts; do
+  sed -i "s|from './\([a-z-]*\)\.js'|from './\1'|g" "$f"
+done
+
+# 3. Generate.
+cd ../../..
+DATABASE_URL=mysql://placeholder:placeholder@localhost:3306/zalvice \
+  pnpm --filter @zalvice/db run generate
+
+# 4. Inspect the generated migration. Look for unsafe drops, missing
+#    indexes, NOT NULL on existing tables without a default.
+cat packages/db/src/migrations/000N_*.sql
+
+# 5. Restore .js extensions for the runtime.
+cd packages/db/src/schema
+for f in *.ts; do
+  sed -i "s|from './\([a-zA-Z_-]*\)';|from './\1.js';|g" "$f"
+done
+
+# 6. Commit schema + migration in one commit.
+```
+
+**Why not just point drizzle-kit at the compiled JS:** we'd need a separate build step in the db package and a watcher during development. Not worth it for the once-per-feature cost of these `sed` runs. Revisit if/when we ship more than a couple of migrations per week.
+
+**Things that go wrong:**
+- Forgetting step 5 — `apps/api` typecheck breaks because NodeNext can't resolve extensionless imports. The `tsc --noEmit` error is explicit (`error TS2835: Relative import paths need explicit file extensions in ECMAScript imports`).
+- Pointing `DATABASE_URL` at production. The reset script refuses prod-looking URLs but generate doesn't connect — still, scope your env vars.
 
 ## Adding new skills to this file
 
