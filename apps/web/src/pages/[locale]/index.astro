@@ -9,8 +9,9 @@ import ProcessSection from '../../components/ProcessSection.astro';
 import StatsBand from '../../components/StatsBand.astro';
 import ArticlesSection from '../../components/ArticlesSection.astro';
 import TechStackSection from '../../components/TechStackSection.astro';
+import TestimonialsSection from '../../components/TestimonialsSection.astro';
 import FinalCta from '../../components/FinalCta.astro';
-import { getStats, getServices, getClients, getLatestPosts } from '../../lib/cms';
+import { getStats, getServices, getClients, getLatestPosts, getTestimonials } from '../../lib/cms';
 import { LOCALES, getDict, isLocale, type Locale } from '../../lib/i18n';
 
 export async function getStaticPaths() {
@@ -22,11 +23,12 @@ if (!isLocale(localeParam)) return Astro.redirect('/en');
 const locale: Locale = localeParam;
 const t = getDict(locale);
 
-const [stats, services, clients, posts] = await Promise.all([
+const [stats, services, clients, posts, testimonials] = await Promise.all([
   getStats(),
   getServices(),
   getClients(),
   getLatestPosts(locale, 3),
+  getTestimonials(locale, { featuredOnly: true, limit: 3 }),
 ]);
 ---
 
@@ -39,6 +41,7 @@ const [stats, services, clients, posts] = await Promise.all([
   <TechStackSection locale={locale} />
   <ProcessSection locale={locale} />
   <StatsBand stats={stats} locale={locale} />
+  <TestimonialsSection testimonials={testimonials} locale={locale} variant="compact" />
   <ArticlesSection posts={posts} locale={locale} />
   <FinalCta locale={locale} />
 

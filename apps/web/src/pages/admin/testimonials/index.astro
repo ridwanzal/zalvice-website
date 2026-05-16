@@ -1,0 +1,143 @@
+---
+import { Plus, Pencil, Archive } from 'lucide-astro';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { requireAdmin, apiGet } from '../../../lib/admin';
+
+export const prerender = false;
+
+const auth = await requireAdmin(Astro);
+if (!auth.user) return auth.redirect;
+const user = auth.user;
+
+type TestimonialRow = {
+  id: number;
+  locale: 'en' | 'id';
+  quote: string;
+  authorName: string;
+  authorRole: string;
+  authorCompany: string;
+  status: 'draft' | 'published' | 'archived';
+  featured: boolean;
+  sortOrder: number;
+  updatedAt: string;
+};
+
+const { testimonials } = await apiGet<{ testimonials: TestimonialRow[] }>(
+  Astro,
+  '/api/admin/testimonials',
+).catch(() => ({ testimonials: [] as TestimonialRow[] }));
+
+const fmt = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+
+function truncate(s: string, n = 110): string {
+  return s.length <= n ? s : s.slice(0, n - 1).trimEnd() + '…';
+}
+---
+
+<AdminLayout title="Reviews" user={user}>
+  <header class="flex items-center justify-between">
+    <div>
+      <p class="font-mono text-[11px] uppercase tracking-[0.14em] text-brand">Content</p>
+      <h1 class="mt-1 font-display text-3xl font-bold text-navy">Reviews</h1>
+      <p class="mt-1 text-sm text-ink/70">{testimonials.length} total</p>
+    </div>
+    <a
+      href="/admin/testimonials/new"
+      class="inline-flex items-center gap-2 rounded-full bg-navy px-5 py-2.5 text-sm font-medium text-paper transition-colors hover:bg-brand"
+    >
+      <Plus class="h-4 w-4" aria-hidden="true" />
+      New review
+    </a>
+  </header>
+
+  <section class="mt-8 overflow-hidden rounded-2xl border border-line bg-paper">
+    {testimonials.length === 0 ? (
+      <div class="px-6 py-16 text-center">
+        <p class="font-display text-lg font-semibold text-navy">No reviews yet.</p>
+        <p class="mt-2 text-sm text-ink/70">Capture quotes from clients to power the homepage and About page sections.</p>
+        <a
+          href="/admin/testimonials/new"
+          class="mt-6 inline-flex items-center gap-2 rounded-full bg-navy px-5 py-2.5 text-sm font-medium text-paper hover:bg-brand"
+        >
+          <Plus class="h-4 w-4" aria-hidden="true" />
+          New review
+        </a>
+      </div>
+    ) : (
+      <table class="w-full">
+        <thead class="border-b border-line bg-mist text-left text-xs font-mono uppercase tracking-wider text-muted">
+          <tr>
+            <th class="px-5 py-3">Quote</th>
+            <th class="px-5 py-3">Author</th>
+            <th class="px-5 py-3">Locale</th>
+            <th class="px-5 py-3">Status</th>
+            <th class="px-5 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-line">
+          {testimonials.map((tm) => (
+            <tr class="hover:bg-mist/40">
+              <td class="px-5 py-3">
+                <a href={`/admin/testimonials/${tm.id}/edit`} class="block max-w-xl">
+                  <p class="text-sm leading-snug text-navy hover:text-brand">"{truncate(tm.quote)}"</p>
+                  {tm.featured && (
+                    <span class="mt-1 inline-block rounded-full bg-brand/10 px-2 py-0.5 font-mono text-[10px] text-brand">
+                      featured
+                    </span>
+                  )}
+                </a>
+              </td>
+              <td class="px-5 py-3 text-sm text-ink">
+                <p class="font-display font-semibold text-navy">{tm.authorName}</p>
+                <p class="mt-0.5 font-mono text-[11px] text-muted">{tm.authorRole} · {tm.authorCompany}</p>
+              </td>
+              <td class="px-5 py-3 font-mono text-xs uppercase text-muted">{tm.locale}</td>
+              <td class="px-5 py-3">
+                <span
+                  class:list={[
+                    'inline-block rounded-full px-2 py-0.5 font-mono text-[10px] font-medium',
+                    tm.status === 'published'
+                      ? 'bg-success/10 text-success'
+                      : tm.status === 'draft'
+                        ? 'bg-mist text-muted'
+                        : 'bg-mist text-navy',
+                  ]}
+                >
+                  {tm.status}
+                </span>
+              </td>
+              <td class="px-5 py-3 text-right">
+                <div class="inline-flex items-center gap-2">
+                  <a
+                    href={`/admin/testimonials/${tm.id}/edit`}
+                    class="inline-flex h-8 items-center gap-1 rounded-lg border border-line bg-paper px-2.5 text-xs text-ink hover:border-brand hover:text-brand"
+                  >
+                    <Pencil class="h-3 w-3" aria-hidden="true" />
+                    Edit
+                  </a>
+                  {tm.status !== 'archived' && (
+                    <form method="post" action={`/api/admin/testimonials/${tm.id}/archive`} class="inline">
+                      <button
+                        type="submit"
+                        class="inline-flex h-8 items-center gap-1 rounded-lg border border-line bg-paper px-2.5 text-xs text-ink hover:border-danger hover:text-danger"
+                        onclick="return confirm('Archive this review?')"
+                      >
+                        <Archive class="h-3 w-3" aria-hidden="true" />
+                        Archive
+                      </button>
+                    </form>
+                  )}
+                </div>
+                <p class="mt-1 font-mono text-[10px] text-muted">{fmt.format(new Date(tm.updatedAt))}</p>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )}
+  </section>
+</AdminLayout>

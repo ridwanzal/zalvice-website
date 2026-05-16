@@ -173,6 +173,23 @@ export const dict: typeof en = {
     label: 'Dipercaya oleh perusahaan-perusahaan ini',
   },
 
+  testimonials: {
+    eyebrow: 'Yang dikatakan klien',
+    headlineEmph: 'Ulasan dari tim yang sistemnya kami bangun.',
+    intro:
+      'Kutipan langsung dari orang-orang yang memiliki sistem yang kami kerjakan. Setiap ulasan menautkan ke studi kasusnya.',
+    readCase: 'Baca studi kasus',
+    aboutEyebrow: 'Ulasan',
+    aboutHeadlineEmph: 'Menurut mereka.',
+  },
+
+  clientsWall: {
+    eyebrow: 'Klien',
+    headlineEmph: 'Perusahaan-perusahaan yang bekerja sama dengan kami.',
+    intro:
+      'Sebagian dari {count}+ tim yang mempercayakan pembangunan sistem yang mereka andalkan kepada kami.',
+  },
+
   about: {
     title: 'Tentang Kami — Zalvice',
     description:

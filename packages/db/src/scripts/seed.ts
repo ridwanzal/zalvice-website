@@ -4,6 +4,7 @@ import { stats } from '../schema/stats.js';
 import { clients } from '../schema/clients.js';
 import { services } from '../schema/services.js';
 import { adminUsers } from '../schema/admin-users.js';
+import { testimonials } from '../schema/testimonials.js';
 
 await db.insert(stats).values([
   { key: 'companies_served', value: 100, label: 'Companies served', suffix: '+', sortOrder: 1 },
@@ -88,6 +89,51 @@ await db.insert(adminUsers).values({
   role: 'admin',
   createdAt: new Date(),
 });
+
+// Sample testimonials so live mode has something to render. Match the
+// fixture set so the public site looks the same in fixture vs live mode.
+const now = new Date();
+await db.insert(testimonials).values([
+  {
+    locale: 'en',
+    quote:
+      'Zalvice rebuilt our dispatch platform on a tight deadline and stayed on for operations. Deploys went from a quarterly event to something we do on a Tuesday afternoon without thinking about it.',
+    authorName: 'Sarah Chen',
+    authorRole: 'VP Engineering',
+    authorCompany: 'Northwind Logistics',
+    featured: true,
+    sortOrder: 1,
+    status: 'published',
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    locale: 'en',
+    quote:
+      "The discovery sprint alone saved us months of architectural rework. Their team interviewed our clinicians, audited the existing system, and came back with a plan we could actually defend to the board.",
+    authorName: 'Dr. Marcus Webb',
+    authorRole: 'Chief Medical Officer',
+    authorCompany: 'Meridian Health',
+    featured: true,
+    sortOrder: 2,
+    status: 'published',
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    locale: 'en',
+    quote:
+      "Sub-millisecond p99 wasn't a number we'd dared put on a slide before. Zalvice's infra team rebuilt our OMS without a single planned outage in 14 months.",
+    authorName: 'Hugo Bertrand',
+    authorRole: 'Head of Trading Technology',
+    authorCompany: 'Aperture Capital',
+    featured: true,
+    sortOrder: 3,
+    status: 'published',
+    createdAt: now,
+    updatedAt: now,
+  },
+]);
 
 console.log('✓ seed complete');
 console.log(`  admin login: ${process.env.SEED_ADMIN_EMAIL ?? 'admin@zalvice.com'} / ${defaultAdminPassword}`);

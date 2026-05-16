@@ -6,3 +6,4 @@ export * from './posts.js';
 export * from './projects.js';
 export * from './team-members.js';
 export * from './admin-users.js';
+export * from './testimonials.js';

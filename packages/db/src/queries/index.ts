@@ -4,3 +4,4 @@ export * from './services.js';
 export * from './posts.js';
 export * from './projects.js';
 export * from './team.js';
+export * from './testimonials.js';

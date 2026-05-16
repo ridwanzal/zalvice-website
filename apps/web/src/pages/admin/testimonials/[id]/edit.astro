@@ -1,0 +1,72 @@
+---
+import { ArrowLeft } from 'lucide-astro';
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import TestimonialForm from '../../../../components/admin/TestimonialForm.astro';
+import { requireAdmin, apiGet } from '../../../../lib/admin';
+
+export const prerender = false;
+
+const auth = await requireAdmin(Astro);
+if (!auth.user) return auth.redirect;
+const user = auth.user;
+
+const id = Number(Astro.params.id);
+if (!Number.isInteger(id)) return Astro.redirect('/admin/testimonials', 302);
+
+type TestimonialFull = {
+  id: number;
+  locale: 'en' | 'id';
+  quote: string;
+  authorName: string;
+  authorRole: string;
+  authorCompany: string;
+  authorPhotoUrl: string | null;
+  authorPhotoAlt: string | null;
+  projectId: number | null;
+  featured: boolean;
+  sortOrder: number;
+  status: 'draft' | 'published' | 'archived';
+};
+
+type AdminProjectRow = {
+  id: number;
+  title: string;
+  locale: 'en' | 'id';
+  clientName: string;
+};
+
+let testimonial: TestimonialFull;
+let projects: AdminProjectRow[] = [];
+try {
+  const [tmResp, projResp] = await Promise.all([
+    apiGet<{ testimonial: TestimonialFull }>(Astro, `/api/admin/testimonials/${id}`),
+    apiGet<{ projects: AdminProjectRow[] }>(Astro, '/api/admin/projects').catch(
+      () => ({ projects: [] as AdminProjectRow[] }),
+    ),
+  ]);
+  testimonial = tmResp.testimonial;
+  projects = projResp.projects;
+} catch {
+  return Astro.redirect('/admin/testimonials', 302);
+}
+---
+
+<AdminLayout title={`Edit · ${testimonial.authorName}`} user={user}>
+  <header class="mb-8">
+    <a href="/admin/testimonials" class="inline-flex items-center gap-2 font-mono text-xs text-muted hover:text-brand">
+      <ArrowLeft class="h-3.5 w-3.5" aria-hidden="true" />
+      Back to reviews
+    </a>
+    <h1 class="mt-3 font-display text-3xl font-bold text-navy">Edit review</h1>
+    <p class="mt-1 font-mono text-[11px] text-muted">
+      ID {testimonial.id} · locale {testimonial.locale.toUpperCase()} · status {testimonial.status}
+    </p>
+  </header>
+
+  <TestimonialForm
+    action={`/api/admin/testimonials/${id}`}
+    values={testimonial}
+    submitLabel="Save changes"
+    projectOptions={projects}
+  />
+</AdminLayout>

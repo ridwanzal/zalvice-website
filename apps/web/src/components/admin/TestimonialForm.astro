@@ -1,0 +1,178 @@
+---
+/*
+ * Shared testimonial create/edit form. Project select is populated from
+ * the admin /api/admin/projects list — admins pick any project regardless
+ * of status so they can link a quote to a draft case study.
+ */
+
+type TestimonialFormData = {
+  locale?: 'en' | 'id';
+  quote?: string;
+  authorName?: string;
+  authorRole?: string;
+  authorCompany?: string;
+  authorPhotoUrl?: string | null;
+  authorPhotoAlt?: string | null;
+  projectId?: number | null;
+  featured?: boolean;
+  sortOrder?: number;
+  status?: 'draft' | 'published' | 'archived';
+};
+
+interface Props {
+  action: string;
+  values?: TestimonialFormData;
+  submitLabel: string;
+  projectOptions: { id: number; title: string; locale: 'en' | 'id'; clientName: string }[];
+}
+
+const { action, values = {}, submitLabel, projectOptions } = Astro.props as Props;
+const v = values;
+---
+
+<form method="post" action={action} class="space-y-8">
+  <section class="rounded-2xl border border-line bg-paper p-6">
+    <h2 class="font-display text-lg font-semibold text-navy">The quote</h2>
+    <div class="mt-5 grid grid-cols-1 gap-5">
+      <div>
+        <label for="locale" class="block text-sm font-medium text-navy">Locale <span class="text-brand">*</span></label>
+        <select
+          id="locale" name="locale" required
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand md:max-w-xs"
+        >
+          <option value="en" selected={v.locale !== 'id'}>English (en)</option>
+          <option value="id" selected={v.locale === 'id'}>Bahasa Indonesia (id)</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="quote" class="block text-sm font-medium text-navy">
+          Quote <span class="text-brand">*</span>
+        </label>
+        <textarea
+          id="quote" name="quote" required minlength="20" maxlength="2000" rows="6"
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+          placeholder="Direct quote from the client. Do not paraphrase."
+        >{v.quote ?? ''}</textarea>
+        <p class="mt-1 font-mono text-[11px] text-muted">20–2000 characters. Rendered with surrounding quotes.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-line bg-paper p-6">
+    <h2 class="font-display text-lg font-semibold text-navy">Author</h2>
+    <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div>
+        <label for="authorName" class="block text-sm font-medium text-navy">Name <span class="text-brand">*</span></label>
+        <input
+          id="authorName" name="authorName" type="text" required minlength="2" maxlength="100"
+          value={v.authorName ?? ''}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+      <div>
+        <label for="authorRole" class="block text-sm font-medium text-navy">Role <span class="text-brand">*</span></label>
+        <input
+          id="authorRole" name="authorRole" type="text" required minlength="2" maxlength="120"
+          value={v.authorRole ?? ''}
+          placeholder="VP Engineering"
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+      <div class="md:col-span-2">
+        <label for="authorCompany" class="block text-sm font-medium text-navy">Company <span class="text-brand">*</span></label>
+        <input
+          id="authorCompany" name="authorCompany" type="text" required minlength="2" maxlength="120"
+          value={v.authorCompany ?? ''}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-line bg-paper p-6">
+    <h2 class="font-display text-lg font-semibold text-navy">Photo (optional)</h2>
+    <p class="mt-1 text-sm text-ink/70">URL only for now. Blank falls back to author initials.</p>
+    <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div>
+        <label for="authorPhotoUrl" class="block text-sm font-medium text-navy">Photo URL</label>
+        <input
+          id="authorPhotoUrl" name="authorPhotoUrl" type="text" maxlength="1024"
+          value={v.authorPhotoUrl ?? ''}
+          placeholder="https://media.zalvice.com/..."
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 font-mono text-sm text-ink focus:border-brand"
+        />
+      </div>
+      <div>
+        <label for="authorPhotoAlt" class="block text-sm font-medium text-navy">Photo alt text</label>
+        <input
+          id="authorPhotoAlt" name="authorPhotoAlt" type="text" maxlength="500"
+          value={v.authorPhotoAlt ?? ''}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-line bg-paper p-6">
+    <h2 class="font-display text-lg font-semibold text-navy">Linked project</h2>
+    <p class="mt-1 text-sm text-ink/70">
+      Optional — when set, the public card shows a "Read the case" link.
+    </p>
+    <div class="mt-5">
+      <label for="projectId" class="block text-sm font-medium text-navy">Project</label>
+      <select
+        id="projectId" name="projectId"
+        class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+      >
+        <option value="" selected={v.projectId === null || v.projectId === undefined}>
+          — None —
+        </option>
+        {projectOptions.map((p) => (
+          <option value={p.id} selected={v.projectId === p.id}>
+            [{p.locale.toUpperCase()}] {p.clientName} — {p.title}
+          </option>
+        ))}
+      </select>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-line bg-paper p-6">
+    <h2 class="font-display text-lg font-semibold text-navy">Surfacing</h2>
+    <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div>
+        <label class="block text-sm font-medium text-navy">Featured</label>
+        <label class="mt-2 inline-flex items-center gap-2 text-sm text-ink">
+          <input type="checkbox" name="featured" value="true" checked={v.featured ?? false} class="rounded border-line text-brand focus:ring-brand" />
+          Show on the homepage testimonials row
+        </label>
+      </div>
+      <div>
+        <label for="sortOrder" class="block text-sm font-medium text-navy">Sort order</label>
+        <input
+          id="sortOrder" name="sortOrder" type="number" min="0" max="9999"
+          value={v.sortOrder ?? 0}
+          class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+        />
+        <p class="mt-1 font-mono text-[11px] text-muted">Lower = earlier on the page.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="flex items-center justify-between gap-4 rounded-2xl border border-line bg-paper p-6">
+    <div>
+      <label for="status" class="block text-sm font-medium text-navy">Status</label>
+      <select id="status" name="status" class="mt-1.5 rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand">
+        {(['draft', 'published', 'archived'] as const).map((s) => (
+          <option value={s} selected={(v.status ?? 'draft') === s}>{s}</option>
+        ))}
+      </select>
+    </div>
+    <button
+      type="submit"
+      class="inline-flex items-center gap-2 rounded-full bg-navy px-6 py-3 font-medium text-paper transition-colors hover:bg-brand"
+    >
+      {submitLabel}
+    </button>
+  </section>
+</form>

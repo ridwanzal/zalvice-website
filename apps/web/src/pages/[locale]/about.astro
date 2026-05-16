@@ -4,7 +4,15 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import TeamMemberCard from '../../components/TeamMemberCard.astro';
-import { getTeamMembers, getStats, findStat } from '../../lib/cms';
+import ClientsWall from '../../components/ClientsWall.astro';
+import TestimonialsSection from '../../components/TestimonialsSection.astro';
+import {
+  getTeamMembers,
+  getStats,
+  findStat,
+  getClients,
+  getTestimonials,
+} from '../../lib/cms';
 import { LOCALES, getDict, isLocale, pathFor, type Locale } from '../../lib/i18n';
 
 export async function getStaticPaths() {
@@ -16,7 +24,12 @@ if (!isLocale(localeParam)) return Astro.redirect('/en');
 const locale: Locale = localeParam;
 const t = getDict(locale);
 
-const [team, stats] = await Promise.all([getTeamMembers(), getStats()]);
+const [team, stats, clients, testimonials] = await Promise.all([
+  getTeamMembers(),
+  getStats(),
+  getClients(),
+  getTestimonials(locale),
+]);
 
 const teams: { slug: 'eng' | 'design' | 'infra' | 'ops'; label: string }[] = [
   { slug: 'eng', label: t.about.teamLabels.eng },
@@ -174,6 +187,10 @@ const tenureSuffix = locale === 'id' ? 'thn' : 'yrs';
       }
     </div>
   </section>
+
+  {/* Clients wall + reviews — both render nothing if their data is empty. */}
+  <ClientsWall clients={clients} stats={stats} locale={locale} />
+  <TestimonialsSection testimonials={testimonials} locale={locale} variant="full" />
 
   {/* CTA */}
   <section class="bg-paper py-20 md:py-24">

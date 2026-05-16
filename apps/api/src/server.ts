@@ -12,6 +12,7 @@ import { cmsRoutes } from './routes/cms.js';
 import { authRoutes } from './routes/auth.js';
 import { adminPostsRoutes } from './routes/admin-posts.js';
 import { adminProjectsRoutes } from './routes/admin-projects.js';
+import { adminTestimonialsRoutes } from './routes/admin-testimonials.js';
 
 async function build() {
   const fastify = Fastify({
@@ -43,6 +44,7 @@ async function build() {
   await fastify.register(authRoutes, { prefix: '/api/auth' });
   await fastify.register(adminPostsRoutes, { prefix: '/api/admin/posts' });
   await fastify.register(adminProjectsRoutes, { prefix: '/api/admin/projects' });
+  await fastify.register(adminTestimonialsRoutes, { prefix: '/api/admin/testimonials' });
 
   return fastify;
 }

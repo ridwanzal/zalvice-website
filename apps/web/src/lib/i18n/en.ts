@@ -174,6 +174,23 @@ export const dict = {
     label: 'Trusted by these companies',
   },
 
+  testimonials: {
+    eyebrow: 'What clients say',
+    headlineEmph: 'Reviews from the teams we built systems with.',
+    intro:
+      "Direct quotes from the people who own the systems we shipped. Every review links to the case study it's about.",
+    readCase: 'Read the case',
+    aboutEyebrow: 'Reviews',
+    aboutHeadlineEmph: 'In their words.',
+  },
+
+  clientsWall: {
+    eyebrow: 'Clients',
+    headlineEmph: 'Companies we work with.',
+    intro:
+      'A selection of the {count}+ teams who have trusted us to ship the systems they run on.',
+  },
+
   about: {
     title: 'About — Zalvice',
     description:

@@ -12,6 +12,7 @@ import type {
   CmsProjectSummary,
   CmsProjectDetail,
   CmsTeamMember,
+  CmsTestimonial,
 } from './cms.js';
 
 export const fixtureStats: CmsStat[] = [
@@ -347,5 +348,92 @@ export const fixtureTeam: CmsTeamMember[] = [
     photoUrl: null,
     photoAlt: null,
     social: null,
+  },
+];
+
+/*
+ * Testimonials — six quotes covering different industries and pillars.
+ * Each project reference points at a real project slug in fixtureProjects
+ * so the "Read the case" link resolves in fixture mode. Featured = true
+ * for the four that surface on the homepage carousel.
+ */
+export const fixtureTestimonials: CmsTestimonial[] = [
+  {
+    id: 1,
+    locale: 'en',
+    quote:
+      "Zalvice rebuilt our dispatch platform on a tight deadline and stayed on for operations. Deploys went from a quarterly event to something we do on a Tuesday afternoon without thinking about it.",
+    authorName: 'Sarah Chen',
+    authorRole: 'VP Engineering',
+    authorCompany: 'Northwind Logistics',
+    authorPhotoUrl: null,
+    authorPhotoAlt: null,
+    project: { slug: 'northwind-fleet-platform', title: 'A real-time fleet platform that ships in 90 seconds' },
+    featured: true,
+  },
+  {
+    id: 2,
+    locale: 'en',
+    quote:
+      "The discovery sprint alone saved us months of architectural rework. Their team interviewed our clinicians, audited the existing system, and came back with a plan we could actually defend to the board.",
+    authorName: 'Dr. Marcus Webb',
+    authorRole: 'Chief Medical Officer',
+    authorCompany: 'Meridian Health',
+    authorPhotoUrl: null,
+    authorPhotoAlt: null,
+    project: { slug: 'meridian-clinic-records', title: 'A clinic records system clinicians actually like using' },
+    featured: true,
+  },
+  {
+    id: 3,
+    locale: 'en',
+    quote:
+      "Sub-millisecond p99 wasn't a number we'd dared put on a slide before. Zalvice's infra team rebuilt our OMS without a single planned outage in 14 months. We trust them with the parts of the stack we cannot afford to get wrong.",
+    authorName: 'Hugo Bertrand',
+    authorRole: 'Head of Trading Technology',
+    authorCompany: 'Aperture Capital',
+    authorPhotoUrl: null,
+    authorPhotoAlt: null,
+    project: { slug: 'aperture-trading-desk', title: 'A trading desk built on sub-millisecond data' },
+    featured: true,
+  },
+  {
+    id: 4,
+    locale: 'en',
+    quote:
+      "They built our RAG assistant the way you would build a payments system — observability, evals, fallback logic from day one. Tier-1 deflection at 38% without losing any CSAT points.",
+    authorName: 'Priya Shankar',
+    authorRole: 'VP Customer Experience',
+    authorCompany: 'Oak & Stone',
+    authorPhotoUrl: null,
+    authorPhotoAlt: null,
+    project: { slug: 'oak-ai-knowledge-base', title: 'A RAG-backed knowledge base their support team trusts' },
+    featured: true,
+  },
+  {
+    id: 5,
+    locale: 'en',
+    quote:
+      "We had two product teams shipping from a half-built design system; in six months Zalvice helped us grow that to fourteen with CI-enforced contribution rules. The system became a thing the org could rally around.",
+    authorName: 'Tomas Ng',
+    authorRole: 'Head of Design',
+    authorCompany: 'Foundry Studio',
+    authorPhotoUrl: null,
+    authorPhotoAlt: null,
+    project: { slug: 'foundry-design-system', title: 'A design system that 14 product teams ship from' },
+    featured: false,
+  },
+  {
+    id: 6,
+    locale: 'en',
+    quote:
+      "Four people now process what used to require sixteen. The workflow rebuild was the obvious win but the admin tooling — the parts you don't see — is what made it stick.",
+    authorName: 'Anna Maric',
+    authorRole: 'Program Director',
+    authorCompany: 'Civic Initiative',
+    authorPhotoUrl: null,
+    authorPhotoAlt: null,
+    project: { slug: 'civic-grant-portal', title: 'A grant portal that quadrupled approvals per quarter' },
+    featured: false,
   },
 ];

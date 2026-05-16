@@ -1,0 +1,40 @@
+---
+import { ArrowLeft } from 'lucide-astro';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import TestimonialForm from '../../../components/admin/TestimonialForm.astro';
+import { requireAdmin, apiGet } from '../../../lib/admin';
+
+export const prerender = false;
+
+const auth = await requireAdmin(Astro);
+if (!auth.user) return auth.redirect;
+const user = auth.user;
+
+type AdminProjectRow = {
+  id: number;
+  title: string;
+  locale: 'en' | 'id';
+  clientName: string;
+};
+
+const { projects } = await apiGet<{ projects: AdminProjectRow[] }>(Astro, '/api/admin/projects').catch(
+  () => ({ projects: [] as AdminProjectRow[] }),
+);
+---
+
+<AdminLayout title="New review" user={user}>
+  <header class="mb-8">
+    <a href="/admin/testimonials" class="inline-flex items-center gap-2 font-mono text-xs text-muted hover:text-brand">
+      <ArrowLeft class="h-3.5 w-3.5" aria-hidden="true" />
+      Back to reviews
+    </a>
+    <h1 class="mt-3 font-display text-3xl font-bold text-navy">New review</h1>
+    <p class="mt-1 text-sm text-ink/70">Status starts as draft. Set Featured + Status=published to put it on the homepage.</p>
+  </header>
+
+  <TestimonialForm
+    action="/api/admin/testimonials"
+    submitLabel="Create review"
+    projectOptions={projects}
+  />
+</AdminLayout>

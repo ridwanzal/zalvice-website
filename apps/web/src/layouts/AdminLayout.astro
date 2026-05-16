@@ -1,6 +1,6 @@
 ---
 import '../styles/globals.css';
-import { LayoutDashboard, FileText, Briefcase, LogOut } from 'lucide-astro';
+import { LayoutDashboard, FileText, Briefcase, MessageSquareQuote, LogOut } from 'lucide-astro';
 
 /*
  * Admin shell. Two-column on lg+ (sidebar + main), single column with a
@@ -20,6 +20,7 @@ const nav = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/posts', label: 'Blog posts', icon: FileText },
   { href: '/admin/projects', label: 'Projects', icon: Briefcase },
+  { href: '/admin/testimonials', label: 'Reviews', icon: MessageSquareQuote },
 ];
 
 function isActive(href: string): boolean {

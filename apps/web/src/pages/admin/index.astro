@@ -1,5 +1,5 @@
 ---
-import { FileText, Briefcase, ArrowRight } from 'lucide-astro';
+import { FileText, Briefcase, MessageSquareQuote, ArrowRight } from 'lucide-astro';
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { requireAdmin, apiGet } from '../../lib/admin';
 
@@ -32,13 +32,23 @@ type ProjectRow = {
   updatedAt: string;
 };
 
-const [postsResp, projectsResp] = await Promise.all([
+type TestimonialRow = {
+  id: number;
+  status: 'draft' | 'published' | 'archived';
+  featured: boolean;
+};
+
+const [postsResp, projectsResp, testimonialsResp] = await Promise.all([
   apiGet<{ posts: PostRow[] }>(Astro, '/api/admin/posts').catch(() => ({ posts: [] })),
   apiGet<{ projects: ProjectRow[] }>(Astro, '/api/admin/projects').catch(() => ({ projects: [] })),
+  apiGet<{ testimonials: TestimonialRow[] }>(Astro, '/api/admin/testimonials').catch(() => ({
+    testimonials: [],
+  })),
 ]);
 
 const posts = postsResp.posts;
 const projects = projectsResp.projects;
+const testimonials = testimonialsResp.testimonials;
 
 const postsByStatus = {
   draft: posts.filter((p) => p.status === 'draft').length,
@@ -52,6 +62,11 @@ const projectsByStatus = {
   published: projects.filter((p) => p.status === 'published').length,
   archived: projects.filter((p) => p.status === 'archived').length,
 };
+
+const testimonialsPublished = testimonials.filter((t) => t.status === 'published').length;
+const testimonialsFeatured = testimonials.filter(
+  (t) => t.status === 'published' && t.featured,
+).length;
 
 const recentPosts = posts.slice(0, 5);
 const recentProjects = projects.slice(0, 5);
@@ -105,11 +120,22 @@ const fmt = new Intl.DateTimeFormat('en-US', {
       </p>
     </a>
 
-    <div class="rounded-2xl border border-line bg-paper p-5">
-      <p class="font-mono text-[11px] uppercase tracking-wider text-muted">Scheduled</p>
-      <p class="mt-3 font-display text-3xl font-bold text-navy">{postsByStatus.scheduled}</p>
-      <p class="mt-2 font-mono text-[11px] text-muted">posts awaiting publish</p>
-    </div>
+    <a
+      href="/admin/testimonials"
+      class="group rounded-2xl border border-line bg-paper p-5 transition-colors hover:border-navy"
+    >
+      <div class="flex items-center justify-between">
+        <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-mist text-brand">
+          <MessageSquareQuote class="h-5 w-5" aria-hidden="true" />
+        </span>
+        <ArrowRight class="h-4 w-4 text-muted transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+      </div>
+      <p class="mt-4 font-mono text-[11px] uppercase tracking-wider text-muted">Reviews</p>
+      <p class="mt-1 font-display text-3xl font-bold text-navy">{testimonialsPublished}</p>
+      <p class="mt-2 font-mono text-[11px] text-muted">
+        published · {testimonialsFeatured} featured
+      </p>
+    </a>
 
     <div class="rounded-2xl border border-line bg-paper p-5">
       <p class="font-mono text-[11px] uppercase tracking-wider text-muted">Archived</p>

@@ -8,6 +8,7 @@ import {
   getPublishedProjects,
   getPublishedProjectBySlug,
   getActiveTeamMembers,
+  getPublishedTestimonials,
 } from '@zalvice/db/queries';
 import { env } from '../lib/env.js';
 
@@ -50,5 +51,18 @@ export async function cmsRoutes(fastify: FastifyInstance) {
     const project = await getPublishedProjectBySlug(locale, req.params.slug);
     if (!project) throw fastify.httpErrors.notFound('project not found');
     return { project };
+  });
+
+  fastify.get('/testimonials', async (req) => {
+    const { locale } = LocaleQuery.parse(req.query);
+    const featuredOnly = (req.query as { featured?: string }).featured === 'true';
+    const limitRaw = (req.query as { limit?: string }).limit;
+    const limit = typeof limitRaw === 'string' ? Math.min(Number(limitRaw), 50) : undefined;
+    return {
+      testimonials: await getPublishedTestimonials(locale, {
+        featuredOnly,
+        ...(typeof limit === 'number' && Number.isFinite(limit) ? { limit } : {}),
+      }),
+    };
   });
 }

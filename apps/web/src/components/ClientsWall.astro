@@ -1,0 +1,59 @@
+---
+import type { CmsClient, CmsStat } from '../lib/cms';
+import { findStat } from '../lib/cms';
+import { getDict, format, type Locale } from '../lib/i18n';
+
+interface Props {
+  clients: CmsClient[];
+  stats?: CmsStat[];
+  locale: Locale;
+}
+
+const { clients, stats = [], locale } = Astro.props;
+const t = getDict(locale);
+
+// Round down to the nearest ten for the headline copy; absolute count
+// could be jittery if a client is removed/added. Stat overrides if set.
+const companiesServed = findStat(stats, 'companies_served');
+const count = companiesServed?.value ?? Math.max(10, Math.floor(clients.length / 10) * 10);
+const intro = format(t.clientsWall.intro, { count });
+---
+
+{
+  clients.length > 0 && (
+    <section class="bg-mist py-20 md:py-28" aria-labelledby="clients-wall-heading">
+      <div class="container">
+        <header class="max-w-2xl">
+          <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">
+            {t.clientsWall.eyebrow}
+          </p>
+          <h2 id="clients-wall-heading" class="mt-3 font-display text-h2 font-bold leading-tight">
+            <span class="heading-gradient">{t.clientsWall.headlineEmph}</span>
+          </h2>
+          <p class="mt-4 text-lg text-ink/75">{intro}</p>
+        </header>
+
+        <ul
+          class="mt-12 grid grid-cols-3 items-center gap-6 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8"
+          aria-label={t.logoStrip.label}
+        >
+          {clients.map((c) => (
+            <li class="flex h-16 items-center justify-center rounded-xl border border-line bg-paper p-3 transition-colors hover:border-navy">
+              {c.logoUrl ? (
+                <img
+                  src={c.logoUrl}
+                  alt={c.logoAlt ?? ''}
+                  loading="lazy"
+                  decoding="async"
+                  class="max-h-full max-w-full object-contain opacity-70 grayscale transition-opacity hover:opacity-100"
+                />
+              ) : (
+                <span class="text-center font-mono text-[11px] text-muted">{c.name}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}

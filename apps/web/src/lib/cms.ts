@@ -19,6 +19,7 @@ import {
   fixtureProjects,
   fixtureProjectDetails,
   fixtureTeam,
+  fixtureTestimonials,
 } from './cms.fixtures.js';
 
 const StatSchema = z.object({
@@ -112,6 +113,20 @@ const TeamMemberSchema = z.object({
 });
 export type CmsTeamMember = z.infer<typeof TeamMemberSchema>;
 
+const TestimonialSchema = z.object({
+  id: z.number(),
+  locale: z.enum(['en', 'id']),
+  quote: z.string(),
+  authorName: z.string(),
+  authorRole: z.string(),
+  authorCompany: z.string(),
+  authorPhotoUrl: z.string().min(1).nullable(),
+  authorPhotoAlt: z.string().nullable(),
+  project: z.object({ slug: z.string(), title: z.string() }).nullable(),
+  featured: z.boolean(),
+});
+export type CmsTestimonial = z.infer<typeof TestimonialSchema>;
+
 async function fetchCms<T>(path: string, schema: z.ZodType<T>, key: string): Promise<T> {
   const url = `${env.API_URL}/cms${path}`;
   const res = await fetch(url, { headers: { 'x-build-token': env.BUILD_TOKEN } });
@@ -192,6 +207,22 @@ export async function getProjectBySlug(
 export async function getTeamMembers(): Promise<CmsTeamMember[]> {
   if (env.CMS_MODE === 'fixture') return fixtureTeam;
   return fetchCms('/team', z.array(TeamMemberSchema), 'team');
+}
+
+export async function getTestimonials(
+  locale: Locale,
+  opts?: { featuredOnly?: boolean; limit?: number },
+): Promise<CmsTestimonial[]> {
+  if (env.CMS_MODE === 'fixture') {
+    let xs = fixtureTestimonials.filter((t) => t.locale === locale);
+    if (opts?.featuredOnly) xs = xs.filter((t) => t.featured);
+    if (typeof opts?.limit === 'number') xs = xs.slice(0, opts.limit);
+    return xs;
+  }
+  const params = new URLSearchParams({ locale });
+  if (opts?.featuredOnly) params.set('featured', 'true');
+  if (typeof opts?.limit === 'number') params.set('limit', String(opts.limit));
+  return fetchCms(`/testimonials?${params}`, z.array(TestimonialSchema), 'testimonials');
 }
 
 /** Lookup a single stat by key with a typed default — used by copy that depends on a specific number. */
