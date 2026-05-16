@@ -93,5 +93,22 @@ const trustedByLine = companiesServed
       linear-gradient(to right, theme('colors.navy') 1px, transparent 1px),
       linear-gradient(to bottom, theme('colors.navy') 1px, transparent 1px);
     background-size: 32px 32px;
+    /* Soft fade at the left + right edges so the grid dissolves into the
+       page background instead of butting up against the viewport. Same
+       pattern as the logo marquee. */
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 14%,
+      black 86%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 14%,
+      black 86%,
+      transparent 100%
+    );
   }
 </style>
