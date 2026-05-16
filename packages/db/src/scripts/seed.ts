@@ -47,6 +47,15 @@ await db.insert(services).values([
     icon: 'life-buoy',
     sortOrder: 4,
   },
+  {
+    slug: 'consulting',
+    name: 'Consulting',
+    pillar: 'consulting',
+    description: 'Senior advisory on architecture, hiring, and engineering strategy.',
+    capabilities: ['Architecture review', 'Team scaling', 'Tech due diligence'],
+    icon: 'compass',
+    sortOrder: 5,
+  },
 ]);
 
 await db.insert(clients).values(

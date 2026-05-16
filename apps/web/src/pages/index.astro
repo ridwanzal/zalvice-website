@@ -5,26 +5,35 @@ import Footer from '../components/Footer.astro';
 import Masthead from '../components/Masthead.astro';
 import LogoStrip from '../components/LogoStrip.astro';
 import ServicesOverview from '../components/ServicesOverview.astro';
-import { getStats, getServices, getClients } from '../lib/cms';
+import ProcessSection from '../components/ProcessSection.astro';
+import StatsBand from '../components/StatsBand.astro';
+import ArticlesSection from '../components/ArticlesSection.astro';
+import FinalCta from '../components/FinalCta.astro';
+import { getStats, getServices, getClients, getLatestPosts } from '../lib/cms';
 
 // Build-time data fetch. With CMS_MODE=fixture (default) this reads from
 // fixtures and never touches the network — see skills.md §2.
-const [stats, services, clients] = await Promise.all([
+const [stats, services, clients, posts] = await Promise.all([
   getStats(),
   getServices(),
   getClients(),
+  getLatestPosts(3),
 ]);
 ---
 
 <BaseLayout
   title="Zalvice — engineers of the systems companies rely on"
-  description="From blueprint to production — design, development, infrastructure, and ongoing support. One integrated team that has helped 100+ companies transform how they operate."
+  description="From blueprint to production — design, development, infrastructure, support, and consulting. One integrated team that has helped 100+ companies transform how they operate."
 >
   <Header slot="header" />
 
   <Masthead stats={stats} />
   <LogoStrip clients={clients} />
   <ServicesOverview services={services} />
+  <ProcessSection />
+  <StatsBand stats={stats} />
+  <ArticlesSection posts={posts} />
+  <FinalCta />
 
   <Footer slot="footer" />
 </BaseLayout>

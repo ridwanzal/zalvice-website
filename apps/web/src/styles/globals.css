@@ -1,3 +1,7 @@
+/* Self-hosted variable fonts — see CLAUDE.md / PRD §7. */
+@import '@fontsource-variable/inter/index.css';
+@import '@fontsource-variable/plus-jakarta-sans/index.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -18,6 +22,15 @@
     background: theme('colors.paper');
   }
 
+  /* Display font on headings by default. Override per-component when needed. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: theme('fontFamily.display');
+    letter-spacing: -0.02em;
+  }
+
   *:focus-visible {
     outline: 2px solid theme('colors.brand');
     outline-offset: 2px;
@@ -29,6 +42,25 @@
   .container {
     @apply mx-auto w-full px-4 sm:px-6 lg:px-8;
     max-width: theme('maxWidth.container');
+  }
+
+  /*
+   * Heading gradient — brand → navy diagonal. Subtle but adds depth.
+   * Apply with class="heading-gradient" on the same element as the heading
+   * text (it relies on background-clip:text so the element must contain text,
+   * not other elements).
+   */
+  .heading-gradient {
+    background-image: linear-gradient(
+      135deg,
+      theme('colors.brand') 0%,
+      theme('colors.navy') 70%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    /* Fallback for browsers that don't honor background-clip:text. */
+    -webkit-text-fill-color: transparent;
   }
 }
 

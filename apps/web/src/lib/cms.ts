@@ -11,7 +11,12 @@
 
 import { z } from 'zod';
 import { env } from './env.js';
-import { fixtureStats, fixtureServices, fixtureClients } from './cms.fixtures.js';
+import {
+  fixtureStats,
+  fixtureServices,
+  fixtureClients,
+  fixturePosts,
+} from './cms.fixtures.js';
 
 const StatSchema = z.object({
   id: z.number(),
@@ -27,7 +32,7 @@ const ServiceSchema = z.object({
   id: z.number(),
   slug: z.string(),
   name: z.string(),
-  pillar: z.enum(['design', 'dev', 'infra', 'support']),
+  pillar: z.enum(['design', 'dev', 'infra', 'support', 'consulting']),
   description: z.string(),
   capabilities: z.array(z.string()),
   icon: z.string(),
@@ -46,6 +51,20 @@ const ClientSchema = z.object({
   featured: z.boolean(),
 });
 export type CmsClient = z.infer<typeof ClientSchema>;
+
+const PostSummarySchema = z.object({
+  id: z.number(),
+  slug: z.string(),
+  title: z.string(),
+  excerpt: z.string(),
+  coverUrl: z.string().min(1).nullable(),
+  coverAlt: z.string().nullable(),
+  category: z.string(),
+  authorName: z.string(),
+  publishedAt: z.string(), // ISO 8601
+  readingMinutes: z.number(),
+});
+export type CmsPostSummary = z.infer<typeof PostSummarySchema>;
 
 async function fetchCms<T>(path: string, schema: z.ZodType<T>, key: string): Promise<T> {
   const url = `${env.API_URL}/cms${path}`;
@@ -73,6 +92,11 @@ export async function getClients(opts?: { featuredOnly?: boolean }): Promise<Cms
   }
   const qs = opts?.featuredOnly ? '?featured=true' : '';
   return fetchCms(`/clients${qs}`, z.array(ClientSchema), 'clients');
+}
+
+export async function getLatestPosts(limit = 3): Promise<CmsPostSummary[]> {
+  if (env.CMS_MODE === 'fixture') return fixturePosts.slice(0, limit);
+  return fetchCms(`/posts/latest?limit=${limit}`, z.array(PostSummarySchema), 'posts');
 }
 
 /** Lookup a single stat by key with a typed default — used by copy that depends on a specific number. */

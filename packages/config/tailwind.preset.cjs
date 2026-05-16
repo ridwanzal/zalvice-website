@@ -22,7 +22,17 @@ module.exports = {
         success: '#059669',
       },
       fontFamily: {
-        sans: ['Inter', 'Helvetica', 'Arial', 'sans-serif'],
+        // Body text — Inter (variable, self-hosted via @fontsource).
+        sans: ['"Inter Variable"', 'Inter', 'Helvetica', 'Arial', 'sans-serif'],
+        // Headings — Plus Jakarta Sans (variable, self-hosted).
+        display: [
+          '"Plus Jakarta Sans Variable"',
+          '"Plus Jakarta Sans"',
+          '"Inter Variable"',
+          'Inter',
+          'Helvetica',
+          'sans-serif',
+        ],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       fontSize: {

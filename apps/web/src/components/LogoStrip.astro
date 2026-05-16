@@ -7,50 +7,50 @@ interface Props {
 
 const { clients } = Astro.props;
 
-// Split into two rows so each scrolls independently in opposite directions.
 const mid = Math.ceil(clients.length / 2);
 const rowA = clients.slice(0, mid);
 const rowB = clients.slice(mid);
 
-// Each row content is duplicated once so the translateX(-50%) animation
-// produces a seamless loop. The second copy is aria-hidden so SR users
-// hear each client exactly once.
+const LOGO_BOX_W = 176; // px — width of every logo cell. Forces visual parity.
+const LOGO_BOX_H = 56; // px — height of every logo cell.
 ---
 
 {
   clients.length > 0 && (
     <section
-      class="border-y border-line bg-mist py-10 md:py-12"
+      class="border-y border-line bg-mist py-12 md:py-16"
       aria-label="Trusted by these companies"
     >
-      <div class="marquee-mask space-y-6 overflow-hidden">
+      <div class="marquee-mask space-y-8 overflow-hidden">
         <div class="marquee" data-direction="left">
           <ul class="marquee-track">
             {rowA.map((c) => (
-              <li class="marquee-item">
+              <li
+                class="marquee-item"
+                style={`width:${LOGO_BOX_W}px;height:${LOGO_BOX_H}px`}
+              >
                 <img
                   src={c.logoUrl ?? ''}
                   alt={c.logoAlt ?? ''}
                   loading="lazy"
                   decoding="async"
-                  width="160"
-                  height="48"
-                  class="max-h-10 w-auto object-contain opacity-70 grayscale transition-opacity hover:opacity-100"
+                  class="max-h-full max-w-full object-contain opacity-60 grayscale transition-opacity hover:opacity-100"
                 />
               </li>
             ))}
           </ul>
           <ul class="marquee-track" aria-hidden="true">
             {rowA.map((c) => (
-              <li class="marquee-item">
+              <li
+                class="marquee-item"
+                style={`width:${LOGO_BOX_W}px;height:${LOGO_BOX_H}px`}
+              >
                 <img
                   src={c.logoUrl ?? ''}
                   alt=""
                   loading="lazy"
                   decoding="async"
-                  width="160"
-                  height="48"
-                  class="max-h-10 w-auto object-contain opacity-70 grayscale"
+                  class="max-h-full max-w-full object-contain opacity-60 grayscale"
                 />
               </li>
             ))}
@@ -60,30 +60,32 @@ const rowB = clients.slice(mid);
         <div class="marquee" data-direction="right">
           <ul class="marquee-track">
             {rowB.map((c) => (
-              <li class="marquee-item">
+              <li
+                class="marquee-item"
+                style={`width:${LOGO_BOX_W}px;height:${LOGO_BOX_H}px`}
+              >
                 <img
                   src={c.logoUrl ?? ''}
                   alt={c.logoAlt ?? ''}
                   loading="lazy"
                   decoding="async"
-                  width="160"
-                  height="48"
-                  class="max-h-10 w-auto object-contain opacity-70 grayscale transition-opacity hover:opacity-100"
+                  class="max-h-full max-w-full object-contain opacity-60 grayscale transition-opacity hover:opacity-100"
                 />
               </li>
             ))}
           </ul>
           <ul class="marquee-track" aria-hidden="true">
             {rowB.map((c) => (
-              <li class="marquee-item">
+              <li
+                class="marquee-item"
+                style={`width:${LOGO_BOX_W}px;height:${LOGO_BOX_H}px`}
+              >
                 <img
                   src={c.logoUrl ?? ''}
                   alt=""
                   loading="lazy"
                   decoding="async"
-                  width="160"
-                  height="48"
-                  class="max-h-10 w-auto object-contain opacity-70 grayscale"
+                  class="max-h-full max-w-full object-contain opacity-60 grayscale"
                 />
               </li>
             ))}
@@ -96,7 +98,6 @@ const rowB = clients.slice(mid);
 
 <style>
   .marquee-mask {
-    /* Fade out at both edges so logos appear to enter and exit gracefully. */
     -webkit-mask-image: linear-gradient(
       to right,
       transparent 0,
@@ -110,10 +111,7 @@ const rowB = clients.slice(mid);
   .marquee {
     display: flex;
     width: max-content;
-    /* Each .marquee-track is 50% of the parent's width (they're flex items
-       sized by their content), so translating by -50% advances exactly one
-       track and the duplicate snaps into place — seamless loop. */
-    animation: marquee-left 40s linear infinite;
+    animation: marquee-left 50s linear infinite;
   }
 
   .marquee[data-direction='right'] {
@@ -128,17 +126,17 @@ const rowB = clients.slice(mid);
     display: flex;
     flex-shrink: 0;
     align-items: center;
-    gap: 3rem; /* matches between-tracks spacing via padding-right on items */
-    padding-right: 3rem;
+    gap: 4.5rem; /* between logos in the same track */
+    padding-right: 4.5rem; /* matches gap so the duplicate track flows seamlessly */
     list-style: none;
     margin: 0;
   }
 
   .marquee-item {
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    min-width: 8rem;
   }
 
   @keyframes marquee-left {

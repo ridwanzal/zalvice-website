@@ -1,0 +1,72 @@
+---
+import { Compass, PenTool, Hammer, Activity } from 'lucide-astro';
+
+/*
+ * Static "system" diagram for the masthead right column. Reinforces the
+ * "blueprint → production" positioning (PRD §1). Four nodes connected by
+ * lines, with a single live-status dot pulsing on the "Operate" node to
+ * hint at ongoing support.
+ */
+
+const steps = [
+  { icon: Compass, label: 'Discover', meta: '1–2 weeks' },
+  { icon: PenTool, label: 'Design', meta: '2–4 weeks' },
+  { icon: Hammer, label: 'Build', meta: '6–16 weeks' },
+  { icon: Activity, label: 'Operate', meta: 'Ongoing', live: true },
+];
+---
+
+<aside
+  class="relative rounded-2xl border border-line bg-paper p-6 shadow-[0_1px_0_rgba(10,37,64,0.04),0_24px_48px_-24px_rgba(10,37,64,0.18)] md:p-7"
+  aria-label="How we work"
+>
+  <header class="flex items-center justify-between">
+    <p class="text-xs font-medium uppercase tracking-[0.14em] text-muted">Lifecycle</p>
+    <span class="inline-flex items-center gap-1.5 rounded-full bg-mist px-2.5 py-1 font-mono text-[11px] text-navy">
+      <span class="relative inline-flex h-1.5 w-1.5">
+        <span
+          class="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60"
+          aria-hidden="true"
+        ></span>
+        <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-success"></span>
+      </span>
+      live · 99.99% uptime
+    </span>
+  </header>
+
+  <h2 class="mt-4 font-display text-xl font-semibold text-navy">
+    From blueprint to production, in one team
+  </h2>
+
+  <ol class="mt-6 space-y-3" role="list">
+    {
+      steps.map((step, i) => (
+        <li class="flex items-center gap-3">
+          <span class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-mist text-brand">
+            <step.icon class="h-4 w-4" aria-hidden="true" />
+            {step.live && (
+              <span
+                class="absolute -right-1 -top-1 inline-flex h-2.5 w-2.5 rounded-full border-2 border-paper bg-success"
+                aria-hidden="true"
+              />
+            )}
+          </span>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-ink">{step.label}</p>
+            <p class="font-mono text-[11px] text-muted">{step.meta}</p>
+          </div>
+          <span class="font-mono text-[11px] tabular-nums text-muted">
+            0{i + 1}
+          </span>
+        </li>
+      ))
+    }
+  </ol>
+
+  <footer class="mt-6 flex items-center justify-between border-t border-line pt-4 text-xs text-muted">
+    <span>One team, end to end</span>
+    <a href="/services" class="font-medium text-brand hover:underline">
+      How we deliver →
+    </a>
+  </footer>
+</aside>

@@ -4,7 +4,7 @@
  * before the API or DB are wired up. Mirror real CMS responses.
  */
 
-import type { CmsStat, CmsService, CmsClient } from './cms.js';
+import type { CmsStat, CmsService, CmsClient, CmsPostSummary } from './cms.js';
 
 export const fixtureStats: CmsStat[] = [
   { id: 1, key: 'companies_served', value: 100, label: 'Companies served', suffix: '+', sortOrder: 1 },
@@ -53,6 +53,58 @@ export const fixtureServices: CmsService[] = [
     capabilities: ['Managed operations', 'SLAs', 'On-call coverage'],
     icon: 'life-buoy',
     sortOrder: 4,
+  },
+  {
+    id: 5,
+    slug: 'consulting',
+    name: 'Consulting',
+    pillar: 'consulting',
+    description: 'Senior advisory on architecture, hiring, and engineering strategy.',
+    capabilities: ['Architecture review', 'Team scaling', 'Tech due diligence'],
+    icon: 'compass',
+    sortOrder: 5,
+  },
+];
+
+export const fixturePosts: CmsPostSummary[] = [
+  {
+    id: 1,
+    slug: 'shipping-zero-downtime-mysql-migrations',
+    title: 'Shipping zero-downtime MySQL migrations at any scale',
+    excerpt:
+      'Renames, FK changes, and column drops all become safe once you split them across deploys. The pattern we use on every client engagement.',
+    coverUrl: null,
+    coverAlt: null,
+    category: 'Infrastructure',
+    authorName: 'M. Ridwan Zalbina',
+    publishedAt: '2026-05-12T09:00:00.000Z',
+    readingMinutes: 6,
+  },
+  {
+    id: 2,
+    slug: 'astro-islands-in-production',
+    title: 'Astro islands in production — what we got right and wrong',
+    excerpt:
+      'After a year of building marketing sites on Astro, here is the short list of patterns we keep and the ones we threw out.',
+    coverUrl: null,
+    coverAlt: null,
+    category: 'Engineering',
+    authorName: 'Zalvice Engineering',
+    publishedAt: '2026-05-04T09:00:00.000Z',
+    readingMinutes: 8,
+  },
+  {
+    id: 3,
+    slug: 'pricing-discovery-engagements',
+    title: 'How we price a discovery engagement',
+    excerpt:
+      'A short, opinionated take on scoping the first three weeks of any project — and the trap of skipping it.',
+    coverUrl: null,
+    coverAlt: null,
+    category: 'Company',
+    authorName: 'Zalvice',
+    publishedAt: '2026-04-22T09:00:00.000Z',
+    readingMinutes: 4,
   },
 ];
 
