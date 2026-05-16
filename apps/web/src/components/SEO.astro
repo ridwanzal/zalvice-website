@@ -1,0 +1,27 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  ogImage?: string;
+  canonical?: string;
+  jsonLd?: Record<string, unknown>;
+  noindex?: boolean;
+}
+
+const { title, description, ogImage, canonical, jsonLd, noindex } = Astro.props;
+const canonicalUrl = canonical ?? new URL(Astro.url.pathname, Astro.site).toString();
+const fullTitle = title.endsWith('Zalvice') ? title : `${title} — Zalvice`;
+---
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalUrl} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={ogImage ?? '/og-default.png'} />
+<meta property="og:url" content={canonicalUrl} />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Zalvice" />
+<meta name="twitter:card" content="summary_large_image" />
+{noindex && <meta name="robots" content="noindex,nofollow" />}
+{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}

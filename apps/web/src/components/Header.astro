@@ -1,0 +1,49 @@
+---
+const nav = [
+  { href: '/services', label: 'Services' },
+  { href: '/work', label: 'Work' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/about', label: 'About' },
+];
+
+const currentPath = Astro.url.pathname;
+---
+
+<header class="sticky top-0 z-40 bg-paper/90 backdrop-blur border-b border-line">
+  <div class="container flex items-center justify-between py-4">
+    <a href="/" class="text-lg font-semibold text-navy" aria-label="Zalvice home">Zalvice</a>
+    <nav aria-label="Primary">
+      <ul class="hidden md:flex items-center gap-6 text-sm">
+        {
+          nav.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                class:list={[
+                  'transition-colors hover:text-brand',
+                  currentPath.startsWith(item.href) ? 'text-brand' : 'text-ink',
+                ]}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+        <li>
+          <a
+            href="/contact"
+            class="inline-flex items-center rounded-full bg-brand px-4 py-2 text-paper hover:bg-navy transition-colors"
+          >
+            Start a project
+          </a>
+        </li>
+      </ul>
+      <a
+        href="/contact"
+        class="md:hidden inline-flex items-center rounded-full bg-brand px-3 py-1.5 text-sm text-paper"
+      >
+        Start
+      </a>
+    </nav>
+  </div>
+</header>

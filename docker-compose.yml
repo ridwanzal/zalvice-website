@@ -1,0 +1,32 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: zalvice-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: zalvice
+      MYSQL_USER: zalvice
+      MYSQL_PASSWORD: zalvice
+      MYSQL_ROOT_PASSWORD: zalvice-root
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uzalvice', '-pzalvice']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  adminer:
+    image: adminer:4
+    container_name: zalvice-adminer
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

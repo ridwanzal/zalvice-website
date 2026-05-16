@@ -1,0 +1,13 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+<BaseLayout title="Blog — Zalvice">
+  <Header slot="header" />
+  <section class="py-12 container">
+    <h2 class="text-2xl font-semibold">Blog</h2>
+    <p class="mt-4">Latest writing about engineering, design, and infrastructure.</p>
+  </section>
+  <Footer slot="footer" />
+</BaseLayout>

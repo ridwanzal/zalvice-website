@@ -1,0 +1,14 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+<BaseLayout title="Contact — Zalvice">
+  <Header slot="header" />
+  <section class="py-12 container">
+    <h2 class="text-2xl font-semibold">Contact</h2>
+    <p class="mt-4">Start a project or book a call.</p>
+    <a href="/contact" class="mt-4 inline-block px-4 py-2 bg-brand text-white rounded">Start a project</a>
+  </section>
+  <Footer slot="footer" />
+</BaseLayout>

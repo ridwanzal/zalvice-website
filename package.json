@@ -1,0 +1,31 @@
+{
+  "name": "zalvice-website",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Zalvice.com — marketing & lead-gen website (monorepo).",
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20.11.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter \"./apps/*\" run dev",
+    "build": "pnpm -r --filter \"./apps/*\" run build",
+    "lint": "pnpm -r run lint",
+    "lint:fix": "pnpm -r run lint:fix",
+    "format": "prettier --write \"**/*.{ts,tsx,astro,md,json}\"",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "test:e2e": "pnpm --filter @zalvice/web run test:e2e",
+    "db:migrate": "pnpm --filter @zalvice/db run migrate",
+    "db:generate": "pnpm --filter @zalvice/db run generate",
+    "db:seed": "pnpm --filter @zalvice/db run seed",
+    "db:studio": "pnpm --filter @zalvice/db run studio",
+    "db:reset": "pnpm --filter @zalvice/db run reset"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "prettier-plugin-astro": "^0.14.1",
+    "typescript": "^5.5.4"
+  }
+}
