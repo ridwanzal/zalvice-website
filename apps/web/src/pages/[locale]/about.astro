@@ -1,0 +1,207 @@
+---
+import { ArrowRight, Award, Globe2, ShieldCheck, Sparkles } from 'lucide-astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import TeamMemberCard from '../../components/TeamMemberCard.astro';
+import { getTeamMembers, getStats, findStat } from '../../lib/cms';
+import { LOCALES, getDict, isLocale, pathFor, type Locale } from '../../lib/i18n';
+
+export async function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+
+const { locale: localeParam } = Astro.params;
+if (!isLocale(localeParam)) return Astro.redirect('/en');
+const locale: Locale = localeParam;
+const t = getDict(locale);
+
+const [team, stats] = await Promise.all([getTeamMembers(), getStats()]);
+
+const teams: { slug: 'eng' | 'design' | 'infra' | 'ops'; label: string }[] = [
+  { slug: 'eng', label: t.about.teamLabels.eng },
+  { slug: 'design', label: t.about.teamLabels.design },
+  { slug: 'infra', label: t.about.teamLabels.infra },
+  { slug: 'ops', label: t.about.teamLabels.ops },
+];
+
+const yearsInOperation = findStat(stats, 'years_in_operation');
+const companiesServed = findStat(stats, 'companies_served');
+
+const valueIcons = [ShieldCheck, Sparkles, Award, Globe2];
+const tenureSuffix = locale === 'id' ? 'thn' : 'yrs';
+---
+
+<BaseLayout locale={locale} title={t.about.title} description={t.about.description}>
+  <Header slot="header" locale={locale} />
+
+  {/* Hero */}
+  <section class="relative overflow-hidden bg-paper">
+    <div aria-hidden="true" class="absolute inset-0 opacity-[0.04] about-grid"></div>
+    <div class="container relative py-20 md:py-28 lg:py-32">
+      <div class="grid grid-cols-1 items-end gap-12 lg:grid-cols-[1.4fr_1fr]">
+        <div>
+          <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{t.about.eyebrow}</p>
+          <h1 class="mt-3 max-w-3xl font-display text-h1 font-bold leading-tight">
+            <span class="heading-gradient">{t.about.headlineEmph}</span><span class="text-navy">{t.about.headlineRest}</span>
+          </h1>
+          <p class="mt-6 max-w-2xl text-lg text-ink/75 md:text-xl">{t.about.intro}</p>
+        </div>
+        <dl class="grid grid-cols-2 gap-6 border-l border-line pl-8">
+          <div>
+            <dt class="font-mono text-[11px] uppercase tracking-wider text-muted">{t.about.founded}</dt>
+            <dd class="mt-1 font-display text-3xl font-bold text-navy">
+              {yearsInOperation ? `${new Date().getFullYear() - yearsInOperation.value}` : '2018'}
+            </dd>
+          </div>
+          <div>
+            <dt class="font-mono text-[11px] uppercase tracking-wider text-muted">{t.about.clients}</dt>
+            <dd class="mt-1 font-display text-3xl font-bold text-navy">
+              {companiesServed ? companiesServed.value : 100}
+              <span class="text-brand">{companiesServed?.suffix ?? '+'}</span>
+            </dd>
+          </div>
+          <div>
+            <dt class="font-mono text-[11px] uppercase tracking-wider text-muted">{t.about.teamLabel}</dt>
+            <dd class="mt-1 font-display text-3xl font-bold text-navy">{team.length}</dd>
+          </div>
+          <div>
+            <dt class="font-mono text-[11px] uppercase tracking-wider text-muted">{t.about.avgTenure}</dt>
+            <dd class="mt-1 font-display text-3xl font-bold text-navy">
+              {Math.round(team.reduce((a, m) => a + m.yearsExperience, 0) / team.length)}
+              <span class="text-brand">{tenureSuffix}</span>
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  {/* Story */}
+  <section class="bg-mist py-20 md:py-24">
+    <div class="container grid grid-cols-1 gap-12 lg:grid-cols-2">
+      <div>
+        <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{t.about.storyEyebrow}</p>
+        <h2 class="mt-3 font-display text-h2 font-bold leading-tight">
+          <span class="heading-gradient">{t.about.storyHeadlineEmph}</span>
+        </h2>
+      </div>
+      <div class="space-y-5 text-lg text-ink/80">
+        {t.about.storyParagraphs.map((p) => <p>{p}</p>)}
+      </div>
+    </div>
+  </section>
+
+  {/* Values */}
+  <section class="bg-paper py-20 md:py-28">
+    <div class="container">
+      <header class="max-w-2xl">
+        <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{t.about.valuesEyebrow}</p>
+        <h2 class="mt-3 font-display text-h2 font-bold leading-tight">
+          <span class="heading-gradient">{t.about.valuesHeadlineEmph}</span>
+        </h2>
+      </header>
+      <ul class="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2">
+        {
+          t.about.values.map((v, i) => {
+            const Icon = valueIcons[i] ?? ShieldCheck;
+            return (
+              <li class="flex gap-5 rounded-2xl border border-line bg-paper p-6">
+                <span class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-mist text-brand">
+                  <Icon class="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <h3 class="font-display text-lg font-semibold text-navy">{v.label}</h3>
+                  <p class="mt-2 text-sm leading-relaxed text-ink/70">{v.body}</p>
+                </div>
+              </li>
+            );
+          })
+        }
+      </ul>
+    </div>
+  </section>
+
+  {/* Team */}
+  <section class="bg-mist py-20 md:py-28 lg:py-32" aria-labelledby="team-heading">
+    <div class="container">
+      <header class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        <div class="max-w-xl">
+          <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{t.about.teamEyebrow}</p>
+          <h2 id="team-heading" class="mt-3 font-display text-h2 font-bold leading-tight">
+            <span class="heading-gradient">{t.about.teamHeadlineEmph}</span>
+          </h2>
+          <p class="mt-4 text-lg text-ink/75">{t.about.teamIntro}</p>
+        </div>
+        <ul class="flex flex-wrap gap-2" aria-label={t.about.filterLabel}>
+          {
+            teams.map((tg) => {
+              const count = team.filter((m) => m.team === tg.slug).length;
+              if (count === 0) return null;
+              return (
+                <li>
+                  <a
+                    href={`#team-${tg.slug}`}
+                    class="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-3 py-1.5 font-mono text-[11px] font-medium text-navy hover:border-brand hover:text-brand"
+                  >
+                    {tg.label}
+                    <span class="text-muted">{count}</span>
+                  </a>
+                </li>
+              );
+            })
+          }
+        </ul>
+      </header>
+
+      {
+        teams.map((tg) => {
+          const members = team.filter((m) => m.team === tg.slug);
+          if (members.length === 0) return null;
+          return (
+            <div id={`team-${tg.slug}`} class="mt-14 scroll-mt-24">
+              <h3 class="font-display text-xl font-semibold text-navy">{tg.label}</h3>
+              <ul class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {members.map((m) => (
+                  <li>
+                    <TeamMemberCard member={m} locale={locale} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })
+      }
+    </div>
+  </section>
+
+  {/* CTA */}
+  <section class="bg-paper py-20 md:py-24">
+    <div class="container">
+      <div class="flex flex-col items-start gap-6 rounded-2xl border border-line bg-mist p-8 md:flex-row md:items-center md:justify-between md:p-12">
+        <div class="max-w-xl">
+          <h2 class="font-display text-2xl font-bold text-navy md:text-3xl">{t.about.ctaHeadline}</h2>
+          <p class="mt-2 text-ink/75">{t.about.ctaBody}</p>
+        </div>
+        <a
+          href={pathFor(locale, '/contact')}
+          class="inline-flex items-center gap-2 rounded-full bg-navy px-6 py-3 font-medium text-paper transition-colors hover:bg-brand"
+        >
+          {t.nav.startProject}
+          <ArrowRight class="h-4 w-4" aria-hidden="true" />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <Footer slot="footer" locale={locale} />
+</BaseLayout>
+
+<style>
+  .about-grid {
+    background-image:
+      linear-gradient(to right, theme('colors.navy') 1px, transparent 1px),
+      linear-gradient(to bottom, theme('colors.navy') 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+</style>

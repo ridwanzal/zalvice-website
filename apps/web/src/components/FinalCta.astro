@@ -1,5 +1,13 @@
 ---
 import { ArrowRight, CalendarDays } from 'lucide-astro';
+import { getDict, pathFor, type Locale } from '../lib/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = getDict(locale);
 ---
 
 <section class="bg-paper py-20 md:py-28 lg:py-32">
@@ -9,45 +17,38 @@ import { ArrowRight, CalendarDays } from 'lucide-astro';
       <div class="relative grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.4fr_1fr]">
         <div>
           <p class="font-mono text-xs uppercase tracking-[0.14em] text-paper/70">
-            Have a system to build?
+            {t.finalCta.eyebrow}
           </p>
           <h2 class="mt-3 max-w-xl font-display text-h2 font-bold leading-tight">
-            Talk to the team that will actually do the work.
+            {t.finalCta.headline}
           </h2>
-          <p class="mt-4 max-w-xl text-lg text-paper/80">
-            No SDR funnel, no four-week procurement dance. You'll be on a call with an engineer or
-            designer who could end up on your project.
-          </p>
+          <p class="mt-4 max-w-xl text-lg text-paper/80">{t.finalCta.intro}</p>
           <div class="mt-8 flex flex-wrap gap-3">
             <a
-              href="/contact"
+              href={pathFor(locale, '/contact')}
               class="inline-flex items-center gap-2 rounded-full bg-paper px-6 py-3 font-medium text-navy transition-colors hover:bg-brand hover:text-paper"
               data-analytics="cta_click"
               data-analytics-location="homepage_final"
               data-analytics-label="Start a project"
             >
-              Start a project
+              {t.nav.startProject}
               <ArrowRight class="h-4 w-4" aria-hidden="true" />
             </a>
             <a
-              href="/contact#book"
+              href={pathFor(locale, '/contact#book')}
               class="inline-flex items-center gap-2 rounded-full border border-paper/30 px-6 py-3 font-medium text-paper transition-colors hover:bg-paper/10"
               data-analytics="cta_click"
               data-analytics-location="homepage_final"
               data-analytics-label="Book a call"
             >
               <CalendarDays class="h-4 w-4" aria-hidden="true" />
-              Book a 30-min call
+              {t.finalCta.bookCall}
             </a>
           </div>
         </div>
 
         <ul class="grid grid-cols-1 gap-3 font-mono text-sm">
-          {[
-            'Reply within 1 business day',
-            'NDA available on request',
-            'Engineering-led discovery, not sales',
-          ].map((line) => (
+          {t.finalCta.reassurance.map((line) => (
             <li class="flex items-center gap-2.5 rounded-xl border border-paper/15 bg-paper/5 px-4 py-3 backdrop-blur">
               <span
                 class="inline-block h-1.5 w-1.5 rounded-full bg-brand"

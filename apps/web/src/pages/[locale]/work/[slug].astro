@@ -1,24 +1,30 @@
 ---
 import { ArrowLeft, ArrowRight, ArrowUpRight, Calendar, Hash, Users } from 'lucide-astro';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-import { getProjects, getProjectBySlug } from '../../lib/cms';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import { getProjects, getProjectBySlug } from '../../../lib/cms';
+import { LOCALES, getDict, isLocale, pathFor, type Locale } from '../../../lib/i18n';
 
 export async function getStaticPaths() {
   const projects = await getProjects();
-  return projects.map((p) => ({ params: { slug: p.slug } }));
+  // Cross product of locales × projects so every project pre-renders in
+  // both locales. Project copy itself is still English-only until the
+  // admin batch lands and we add locale-aware fixtures.
+  return LOCALES.flatMap((locale) =>
+    projects.map((p) => ({ params: { locale, slug: p.slug } })),
+  );
 }
 
-const { slug } = Astro.params;
-if (!slug) {
-  return Astro.redirect('/work');
-}
+const { locale: localeParam, slug } = Astro.params;
+if (!isLocale(localeParam)) return Astro.redirect('/en');
+const locale: Locale = localeParam;
+if (!slug) return Astro.redirect(pathFor(locale, '/work'));
 
 const project = await getProjectBySlug(slug);
-if (!project) {
-  return Astro.redirect('/404');
-}
+if (!project) return Astro.redirect(pathFor(locale, '/404'));
+
+const t = getDict(locale);
 
 const all = await getProjects();
 const related = all
@@ -27,11 +33,11 @@ const related = all
   .slice(0, 3);
 
 const pillarLabels: Record<string, string> = {
-  design: 'Design',
-  dev: 'Development',
-  infra: 'Infrastructure',
-  support: 'Support',
-  consulting: 'Consulting',
+  design: t.contact.projectTypes.design,
+  dev: t.contact.projectTypes.development,
+  infra: t.contact.projectTypes.infrastructure,
+  support: t.contact.projectTypes.support,
+  consulting: t.contact.projectTypes.consulting,
 };
 
 const jsonLd = {
@@ -41,14 +47,9 @@ const jsonLd = {
   about: project.summary,
   creator: { '@type': 'Organization', name: 'Zalvice' },
   dateCreated: String(project.year),
+  inLanguage: locale,
 };
 
-/*
- * Placeholder Markdown → HTML. Handles ##, paragraphs, bullets only.
- * The proper unified/remark/shiki pipeline ships with the blog batch
- * (skills.md §7). Safe to inline because bodyMd comes from trusted CMS
- * authors — not user input — per the same skills.md note.
- */
 function renderSimpleMd(md: string): string {
   const escape = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -74,24 +75,23 @@ function renderSimpleMd(md: string): string {
 ---
 
 <BaseLayout
+  locale={locale}
   title={`${project.title} — Zalvice`}
   description={project.summary}
   ogImage={project.heroUrl ?? undefined}
 >
-  <Header slot="header" />
+  <Header slot="header" locale={locale} />
 
   <article>
-    {/* Breadcrumb */}
     <nav class="bg-paper" aria-label="Breadcrumb">
       <div class="container py-6">
-        <a href="/work" class="inline-flex items-center gap-2 font-mono text-xs text-muted hover:text-brand">
+        <a href={pathFor(locale, '/work')} class="inline-flex items-center gap-2 font-mono text-xs text-muted hover:text-brand">
           <ArrowLeft class="h-3.5 w-3.5" aria-hidden="true" />
-          Back to work
+          {t.workDetail.backToWork}
         </a>
       </div>
     </nav>
 
-    {/* Hero */}
     <header class="bg-paper">
       <div class="container pb-12">
         <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{project.industry}</p>
@@ -104,29 +104,29 @@ function renderSimpleMd(md: string): string {
           <div>
             <dt class="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted">
               <Hash class="h-3 w-3" aria-hidden="true" />
-              Client
+              {t.workDetail.client}
             </dt>
             <dd class="mt-1 font-display text-lg font-semibold text-navy">{project.clientName}</dd>
           </div>
           <div>
             <dt class="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted">
               <Calendar class="h-3 w-3" aria-hidden="true" />
-              Year
+              {t.workDetail.year}
             </dt>
             <dd class="mt-1 font-display text-lg font-semibold text-navy">{project.year}</dd>
           </div>
           <div>
             <dt class="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted">
               <Users class="h-3 w-3" aria-hidden="true" />
-              Team
+              {t.workDetail.team}
             </dt>
             <dd class="mt-1 font-display text-lg font-semibold text-navy">
               {project.teamSize}
-              <span class="text-muted text-sm font-normal"> · {project.durationMonths} mo</span>
+              <span class="text-muted text-sm font-normal"> · {project.durationMonths} {t.workDetail.teamSuffix}</span>
             </dd>
           </div>
           <div>
-            <dt class="font-mono text-[11px] uppercase tracking-wider text-muted">Services</dt>
+            <dt class="font-mono text-[11px] uppercase tracking-wider text-muted">{t.workDetail.services}</dt>
             <dd class="mt-1 flex flex-wrap gap-1">
               {
                 project.services.map((s) => (
@@ -140,7 +140,6 @@ function renderSimpleMd(md: string): string {
         </dl>
       </div>
 
-      {/* Hero image / placeholder */}
       <div class="container">
         <div class="relative aspect-[16/8] overflow-hidden rounded-2xl bg-mist">
           {
@@ -164,11 +163,10 @@ function renderSimpleMd(md: string): string {
       </div>
     </header>
 
-    {/* Outcomes */}
     <section class="bg-paper py-16 md:py-20" aria-labelledby="outcomes-heading">
       <div class="container">
         <h2 id="outcomes-heading" class="font-display text-h2 font-bold leading-tight">
-          <span class="heading-gradient">Outcomes</span>
+          <span class="heading-gradient">{t.workDetail.outcomes}</span>
         </h2>
         <dl class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
           {
@@ -186,8 +184,6 @@ function renderSimpleMd(md: string): string {
       </div>
     </section>
 
-    {/* Body — markdown rendered server-side (very simple v1 — full Markdown
-        pipeline ships with skills.md §7 in the blog batch). */}
     <section class="bg-mist py-16 md:py-24">
       <div class="container grid grid-cols-1 gap-10 lg:grid-cols-[2fr_1fr]">
         <div class="prose-zalvice">
@@ -195,12 +191,12 @@ function renderSimpleMd(md: string): string {
         </div>
         <aside class="space-y-6">
           <div class="rounded-2xl border border-line bg-paper p-6">
-            <h3 class="font-mono text-[11px] uppercase tracking-wider text-muted">Tech stack</h3>
+            <h3 class="font-mono text-[11px] uppercase tracking-wider text-muted">{t.workDetail.techStack}</h3>
             <ul class="mt-4 flex flex-wrap gap-1.5">
               {
-                project.techStack.map((t) => (
+                project.techStack.map((tech) => (
                   <li class="rounded-full bg-mist px-2.5 py-1 font-mono text-[11px] font-medium text-navy">
-                    {t}
+                    {tech}
                   </li>
                 ))
               }
@@ -210,20 +206,19 @@ function renderSimpleMd(md: string): string {
       </div>
     </section>
 
-    {/* Related */}
     {
       related.length > 0 && (
         <section class="bg-paper py-20 md:py-24" aria-labelledby="related-heading">
           <div class="container">
             <header class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <h2 id="related-heading" class="font-display text-2xl font-bold text-navy md:text-3xl">
-                More work
+                {t.workDetail.moreWork}
               </h2>
               <a
-                href="/work"
+                href={pathFor(locale, '/work')}
                 class="inline-flex items-center gap-1.5 text-sm font-medium text-navy hover:text-brand"
               >
-                All projects
+                {t.workDetail.allProjects}
                 <ArrowRight class="h-3.5 w-3.5" aria-hidden="true" />
               </a>
             </header>
@@ -231,7 +226,7 @@ function renderSimpleMd(md: string): string {
               {related.map((r) => (
                 <li>
                   <a
-                    href={`/work/${r.slug}`}
+                    href={pathFor(locale, `/work/${r.slug}`)}
                     class="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-paper transition-all hover:border-navy hover:shadow-[0_12px_36px_-16px_rgba(10,37,64,0.18)]"
                   >
                     <div class="relative aspect-[16/10] overflow-hidden bg-mist">
@@ -245,7 +240,7 @@ function renderSimpleMd(md: string): string {
                         {r.title}
                       </h3>
                       <span class="mt-auto inline-flex items-center gap-1 pt-4 text-sm font-medium text-brand">
-                        View case
+                        {t.workDetail.viewCase}
                         <ArrowUpRight class="h-3 w-3" aria-hidden="true" />
                       </span>
                     </div>
@@ -258,24 +253,21 @@ function renderSimpleMd(md: string): string {
       )
     }
 
-    {/* CTA */}
     <section class="bg-paper pb-24">
       <div class="container">
         <div class="rounded-3xl border border-line bg-navy p-8 text-paper md:p-12">
           <div class="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
             <div class="max-w-xl">
               <h2 class="font-display text-2xl font-bold leading-tight md:text-3xl">
-                Have something similar in mind?
+                {t.workDetail.similarHeadline}
               </h2>
-              <p class="mt-2 text-paper/80">
-                The same team that shipped this one is available for new engagements.
-              </p>
+              <p class="mt-2 text-paper/80">{t.workDetail.similarBody}</p>
             </div>
             <a
-              href="/contact"
+              href={pathFor(locale, '/contact')}
               class="inline-flex items-center gap-2 rounded-full bg-paper px-6 py-3 font-medium text-navy transition-colors hover:bg-brand hover:text-paper"
             >
-              Start a project
+              {t.nav.startProject}
               <ArrowRight class="h-4 w-4" aria-hidden="true" />
             </a>
           </div>
@@ -284,7 +276,7 @@ function renderSimpleMd(md: string): string {
     </section>
   </article>
 
-  <Footer slot="footer" />
+  <Footer slot="footer" locale={locale} />
 
   <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
 </BaseLayout>
@@ -297,11 +289,6 @@ function renderSimpleMd(md: string): string {
       linear-gradient(135deg, theme('colors.navy') 0%, theme('colors.brand') 100%);
   }
 
-  /*
-   * Minimal "prose" styling for the project body. The proper unified/remark
-   * Markdown pipeline ships with the blog batch (skills.md §7) — for now we
-   * style what renderSimpleMd produces (h2, p, ul, ol, code).
-   */
   .prose-zalvice {
     color: theme('colors.ink');
     font-size: 1.0625rem;

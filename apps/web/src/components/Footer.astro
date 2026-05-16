@@ -1,21 +1,29 @@
 ---
 import { ArrowRight, Github, Linkedin, Twitter, Mail, MapPin } from 'lucide-astro';
+import { getDict, getLocaleFromUrl, pathFor, format, type Locale } from '../lib/i18n';
+
+interface Props {
+  locale?: Locale | undefined;
+}
+
+const locale = Astro.props.locale ?? getLocaleFromUrl(Astro.url);
+const t = getDict(locale);
 
 const year = new Date().getFullYear();
 
 const serviceLinks = [
-  { href: '/services#design', label: 'Design' },
-  { href: '/services#development', label: 'Development' },
-  { href: '/services#infrastructure', label: 'Infrastructure' },
-  { href: '/services#support', label: 'Support' },
-  { href: '/services#consulting', label: 'Consulting' },
+  { href: pathFor(locale, '/services#design'), label: t.contact.projectTypes.design },
+  { href: pathFor(locale, '/services#development'), label: t.contact.projectTypes.development },
+  { href: pathFor(locale, '/services#infrastructure'), label: t.contact.projectTypes.infrastructure },
+  { href: pathFor(locale, '/services#support'), label: t.contact.projectTypes.support },
+  { href: pathFor(locale, '/services#consulting'), label: t.contact.projectTypes.consulting },
 ];
 
 const companyLinks = [
-  { href: '/about', label: 'About' },
-  { href: '/work', label: 'Work' },
-  { href: '/blog', label: 'Blog' },
-  { href: '/contact', label: 'Contact' },
+  { href: pathFor(locale, '/about'), label: t.nav.about },
+  { href: pathFor(locale, '/work'), label: t.nav.work },
+  { href: pathFor(locale, '/blog'), label: t.nav.blog },
+  { href: pathFor(locale, '/contact'), label: t.nav.contact },
 ];
 
 const social = [
@@ -32,12 +40,11 @@ const social = [
     <div class="grid grid-cols-1 gap-12 md:grid-cols-12">
       {/* Col 1 — Brand */}
       <div class="md:col-span-4">
-        <a href="/" class="inline-flex items-center" aria-label="Zalvice home">
+        <a href={pathFor(locale, '/')} class="inline-flex items-center" aria-label={t.nav.home}>
           <img src="/logos/logos.svg" alt="Zalvice" width="86" height="25" class="h-[2.1875rem] w-auto invert" />
         </a>
         <p class="mt-5 max-w-sm text-sm leading-relaxed text-paper/70">
-          From blueprint to production — we engineer the systems companies rely on. Design,
-          development, infrastructure, support, and consulting under one roof.
+          {t.footer.description}
         </p>
         <ul class="mt-6 flex items-center gap-3">
           {
@@ -59,8 +66,8 @@ const social = [
       </div>
 
       {/* Col 2 — Services */}
-      <nav class="md:col-span-2" aria-label="Services">
-        <p class="font-mono text-xs uppercase tracking-[0.14em] text-paper/60">Services</p>
+      <nav class="md:col-span-2" aria-label={t.footer.services}>
+        <p class="font-mono text-xs uppercase tracking-[0.14em] text-paper/60">{t.footer.services}</p>
         <ul class="mt-4 space-y-3 text-sm">
           {
             serviceLinks.map(({ href, label }) => (
@@ -75,8 +82,8 @@ const social = [
       </nav>
 
       {/* Col 3 — Company */}
-      <nav class="md:col-span-2" aria-label="Company">
-        <p class="font-mono text-xs uppercase tracking-[0.14em] text-paper/60">Company</p>
+      <nav class="md:col-span-2" aria-label={t.footer.company}>
+        <p class="font-mono text-xs uppercase tracking-[0.14em] text-paper/60">{t.footer.company}</p>
         <ul class="mt-4 space-y-3 text-sm">
           {
             companyLinks.map(({ href, label }) => (
@@ -92,7 +99,7 @@ const social = [
 
       {/* Col 4 — Get in touch */}
       <div class="md:col-span-4">
-        <p class="font-mono text-xs uppercase tracking-[0.14em] text-paper/60">Get in touch</p>
+        <p class="font-mono text-xs uppercase tracking-[0.14em] text-paper/60">{t.footer.getInTouch}</p>
         <ul class="mt-4 space-y-3 text-sm">
           <li>
             <a
@@ -105,14 +112,14 @@ const social = [
           </li>
           <li class="inline-flex items-start gap-2 text-paper/80">
             <MapPin class="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-            <span>Jakarta · Remote-first</span>
+            <span>{t.footer.location}</span>
           </li>
         </ul>
         <a
-          href="/contact"
+          href={pathFor(locale, '/contact')}
           class="mt-6 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-paper transition-colors hover:bg-paper hover:text-navy"
         >
-          Start a project
+          {t.nav.startProject}
           <ArrowRight class="h-3.5 w-3.5" aria-hidden="true" />
         </a>
       </div>
@@ -123,12 +130,12 @@ const social = [
     <div
       class="container flex flex-col gap-3 py-6 text-xs text-paper/60 md:flex-row md:items-center md:justify-between"
     >
-      <p>© {year} Zalvice. All rights reserved.</p>
+      <p>{format(t.footer.copyright, { year })}</p>
       <ul class="flex flex-wrap items-center gap-4 font-mono">
-        <li><a class="hover:text-paper" href="/privacy">Privacy</a></li>
-        <li><a class="hover:text-paper" href="/terms">Terms</a></li>
-        <li><a class="hover:text-paper" href="/sitemap-index.xml">Sitemap</a></li>
-        <li><a class="hover:text-paper" href="/rss.xml">RSS</a></li>
+        <li><a class="hover:text-paper" href={pathFor(locale, '/privacy')}>{t.footer.privacy}</a></li>
+        <li><a class="hover:text-paper" href={pathFor(locale, '/terms')}>{t.footer.terms}</a></li>
+        <li><a class="hover:text-paper" href="/sitemap-index.xml">{t.footer.sitemap}</a></li>
+        <li><a class="hover:text-paper" href="/rss.xml">{t.footer.rss}</a></li>
       </ul>
     </div>
   </div>

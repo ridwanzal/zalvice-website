@@ -2,18 +2,30 @@
 import { ArrowRight } from 'lucide-astro';
 import type { CmsStat } from '../lib/cms';
 import { findStat } from '../lib/cms';
-import LifecycleDiagram from './LifecycleDiagram.astro';
+import MastheadArt from './MastheadArt.astro';
+import { getDict, format, pathFor, type Locale } from '../lib/i18n';
 
 interface Props {
   stats: CmsStat[];
+  locale: Locale;
 }
 
-const { stats } = Astro.props;
+const { stats, locale } = Astro.props;
+const t = getDict(locale);
 
 const companiesServed = findStat(stats, 'companies_served');
 const trustedByLine = companiesServed
-  ? `Trusted by ${companiesServed.value}${companiesServed.suffix} companies`
-  : 'Trusted by companies worldwide';
+  ? format(t.masthead.eyebrustedBy, {
+      value: companiesServed.value,
+      suffix: companiesServed.suffix,
+    })
+  : t.masthead.eyebrustedByFallback;
+
+// First variant ships server-rendered for LCP; the rotation script swaps
+// the headline content on a 10s interval. Variants serialize as JSON for
+// the inline script to consume — keeps the component fully static-friendly.
+const variants = t.masthead.variants;
+const initial = variants[0]!;
 ---
 
 <section class="relative overflow-hidden bg-paper">
@@ -30,35 +42,38 @@ const trustedByLine = companiesServed
           {trustedByLine}
         </span>
 
-        <h1 class="mt-6 max-w-2xl font-display text-h1 font-bold leading-tight">
-          <span class="heading-gradient">From blueprint to production</span>
-          <span class="text-navy"> — we engineer the systems companies rely on.</span>
+        <h1
+          class="mt-6 max-w-2xl font-display text-h1 font-bold leading-tight"
+          data-masthead-headline
+        >
+          <span class="heading-gradient" data-masthead-emphasis>{initial.emphasis}</span><span
+            class="text-navy"
+            data-masthead-rest>{initial.rest}</span>
         </h1>
 
         <p class="mt-6 max-w-xl text-lg text-ink/75 md:text-xl">
-          Design, development, infrastructure, and ongoing support — one integrated team that has
-          helped transform how companies operate.
+          {t.masthead.subhead}
         </p>
 
         <div class="mt-8 flex flex-wrap gap-3">
           <a
-            href="/contact"
+            href={pathFor(locale, '/contact')}
             class="inline-flex items-center gap-2 rounded-full bg-navy px-6 py-3 font-medium text-paper transition-colors hover:bg-brand"
             data-analytics="cta_click"
             data-analytics-location="homepage_hero"
             data-analytics-label="Start a project"
           >
-            Start a project
+            {t.nav.startProject}
             <ArrowRight class="h-4 w-4" aria-hidden="true" />
           </a>
           <a
-            href="/work"
+            href={pathFor(locale, '/work')}
             class="inline-flex items-center gap-2 rounded-full border border-line bg-paper px-6 py-3 font-medium text-ink transition-colors hover:border-brand hover:text-brand"
             data-analytics="cta_click"
             data-analytics-location="homepage_hero"
             data-analytics-label="See our work"
           >
-            See our work
+            {t.masthead.seeWork}
           </a>
         </div>
 
@@ -79,12 +94,20 @@ const trustedByLine = companiesServed
         </dl>
       </div>
 
-      {/* Right column — lifecycle diagram */}
+      {/* Right column — pure-CSS animated composition */}
       <div class="lg:pl-8">
-        <LifecycleDiagram />
+        <MastheadArt locale={locale} />
       </div>
     </div>
   </div>
+
+  {/* Headline variants for the rotation script — serialized as JSON. */}
+  <script
+    is:inline
+    type="application/json"
+    data-masthead-variants
+    set:html={JSON.stringify(variants)}
+  />
 </section>
 
 <style>
@@ -93,9 +116,6 @@ const trustedByLine = companiesServed
       linear-gradient(to right, theme('colors.navy') 1px, transparent 1px),
       linear-gradient(to bottom, theme('colors.navy') 1px, transparent 1px);
     background-size: 32px 32px;
-    /* Soft fade at the left + right edges so the grid dissolves into the
-       page background instead of butting up against the viewport. Same
-       pattern as the logo marquee. */
     -webkit-mask-image: linear-gradient(
       to right,
       transparent 0%,
@@ -111,4 +131,60 @@ const trustedByLine = companiesServed
       transparent 100%
     );
   }
+
+  /* Crossfade the headline spans during rotation. */
+  [data-masthead-emphasis],
+  [data-masthead-rest] {
+    transition: opacity 280ms ease-out;
+  }
+  [data-masthead-headline][data-rotating] [data-masthead-emphasis],
+  [data-masthead-headline][data-rotating] [data-masthead-rest] {
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-masthead-emphasis],
+    [data-masthead-rest] {
+      transition: none;
+    }
+  }
 </style>
+
+<script>
+  /*
+   * Masthead headline rotator. Reads variants from the inline JSON tag,
+   * cycles every 10s with a short crossfade. Honors prefers-reduced-motion
+   * by leaving the first variant in place forever.
+   */
+  type Variant = { emphasis: string; rest: string };
+
+  const headline = document.querySelector<HTMLElement>('[data-masthead-headline]');
+  const emphasis = headline?.querySelector<HTMLElement>('[data-masthead-emphasis]');
+  const rest = headline?.querySelector<HTMLElement>('[data-masthead-rest]');
+  const data = document.querySelector<HTMLScriptElement>('[data-masthead-variants]');
+
+  if (headline && emphasis && rest && data) {
+    let variants: Variant[] = [];
+    try {
+      variants = JSON.parse(data.textContent ?? '[]') as Variant[];
+    } catch {
+      variants = [];
+    }
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (variants.length > 1 && !reducedMotion.matches) {
+      let i = 0;
+      window.setInterval(() => {
+        i = (i + 1) % variants.length;
+        const next = variants[i]!;
+        // Fade out, swap text, fade back in.
+        headline.setAttribute('data-rotating', '');
+        window.setTimeout(() => {
+          emphasis.textContent = next.emphasis;
+          rest.textContent = next.rest;
+          headline.removeAttribute('data-rotating');
+        }, 300);
+      }, 10_000);
+    }
+  }
+</script>

@@ -1,0 +1,257 @@
+---
+import { getDict, type Locale } from '../lib/i18n';
+
+/*
+ * Pure-CSS animated art for the masthead right column. No images, no SVG
+ * files, no JS. Composition:
+ *
+ *  - A subtle blueprint grid that drifts diagonally.
+ *  - Three glow rings pulsing at offset intervals.
+ *  - Three node "chips" rotating in a slow orbit, each tagged with a
+ *    phase keyword from the design lifecycle.
+ *  - A faint terminal-style status line at the bottom that cycles
+ *    through three states (build → deploy → monitor) via a keyframe.
+ *
+ * All animations are transform/opacity only (compositor-friendly). The
+ * `prefers-reduced-motion` media query disables every animation; the
+ * piece still reads as a finished composition when static.
+ */
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = getDict(locale);
+
+// Three chips with localized phase labels.
+const chips = [
+  { label: t.process.steps[0]!.label, position: 'a' },
+  { label: t.process.steps[2]!.label, position: 'b' },
+  { label: t.process.steps[3]!.label, position: 'c' },
+];
+
+// Three status lines that swap in the "terminal" pill.
+const status = [t.lifecycle.chip, '$ deploy --region all', '$ tail logs --follow'];
+---
+
+<div class="masthead-art" aria-hidden="true">
+  {/* Animated grid backdrop */}
+  <div class="art-grid"></div>
+
+  {/* Three pulse rings, offset */}
+  <div class="art-pulse art-pulse--a"></div>
+  <div class="art-pulse art-pulse--b"></div>
+  <div class="art-pulse art-pulse--c"></div>
+
+  {/* Central core */}
+  <div class="art-core">
+    <span class="art-core-dot"></span>
+    <span class="art-core-label">live</span>
+  </div>
+
+  {/* Orbiting chips */}
+  {
+    chips.map((c) => (
+      <div class:list={['art-chip', `art-chip--${c.position}`]}>
+        <span class="art-chip-dot"></span>
+        {c.label}
+      </div>
+    ))
+  }
+
+  {/* Terminal status line */}
+  <div class="art-status">
+    {status.map((line) => <span>{line}</span>)}
+  </div>
+</div>
+
+<style>
+  .masthead-art {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 5 / 6;
+    max-width: 26rem;
+    margin-left: auto;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    background: radial-gradient(
+        ellipse at 70% 20%,
+        rgba(30, 95, 255, 0.18),
+        transparent 55%
+      ),
+      linear-gradient(180deg, theme('colors.paper') 0%, theme('colors.mist') 100%);
+    border: 1px solid theme('colors.line');
+    box-shadow:
+      0 1px 0 rgba(10, 37, 64, 0.04),
+      0 24px 48px -24px rgba(10, 37, 64, 0.18);
+  }
+
+  /* Drifting grid backdrop */
+  .art-grid {
+    position: absolute;
+    inset: -10%;
+    background-image:
+      linear-gradient(to right, rgba(10, 37, 64, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(10, 37, 64, 0.07) 1px, transparent 1px);
+    background-size: 36px 36px;
+    animation: art-grid-drift 24s linear infinite;
+  }
+  @keyframes art-grid-drift {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(-36px, -36px, 0); }
+  }
+
+  /* Pulse rings */
+  .art-pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6rem;
+    height: 6rem;
+    margin: -3rem 0 0 -3rem;
+    border-radius: 9999px;
+    border: 1px solid theme('colors.brand');
+    opacity: 0;
+    transform: scale(0.3);
+    animation: art-pulse 4s ease-out infinite;
+  }
+  .art-pulse--b { animation-delay: 1.3s; }
+  .art-pulse--c { animation-delay: 2.6s; }
+  @keyframes art-pulse {
+    0%   { transform: scale(0.3); opacity: 0; }
+    20%  { opacity: 0.7; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
+
+  /* Central core */
+  .art-core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    border-radius: 9999px;
+    background: theme('colors.navy');
+    color: theme('colors.paper');
+    font-family: theme('fontFamily.mono');
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    box-shadow: 0 8px 24px -8px rgba(10, 37, 64, 0.4);
+  }
+  .art-core-dot {
+    display: inline-block;
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 9999px;
+    background: theme('colors.success');
+    box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.6);
+    animation: art-core-blink 1.6s ease-in-out infinite;
+  }
+  @keyframes art-core-blink {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.6); }
+    50%      { box-shadow: 0 0 0 6px rgba(5, 150, 105, 0); }
+  }
+  .art-core-label { opacity: 0.85; }
+
+  /* Orbiting chips — three positions, each independently animated. */
+  .art-chip {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    background: theme('colors.paper');
+    border: 1px solid theme('colors.line');
+    font-family: theme('fontFamily.mono');
+    font-size: 10px;
+    color: theme('colors.navy');
+    box-shadow: 0 4px 14px -6px rgba(10, 37, 64, 0.12);
+    white-space: nowrap;
+  }
+  .art-chip-dot {
+    width: 0.35rem;
+    height: 0.35rem;
+    border-radius: 9999px;
+    background: theme('colors.brand');
+  }
+  .art-chip--a {
+    top: 14%;
+    left: 8%;
+    animation: art-float-a 7s ease-in-out infinite;
+  }
+  .art-chip--b {
+    top: 28%;
+    right: 8%;
+    animation: art-float-b 8s ease-in-out infinite;
+  }
+  .art-chip--c {
+    bottom: 18%;
+    left: 14%;
+    animation: art-float-c 9s ease-in-out infinite;
+  }
+  @keyframes art-float-a {
+    0%, 100% { transform: translate(0, 0); }
+    50%      { transform: translate(8px, -6px); }
+  }
+  @keyframes art-float-b {
+    0%, 100% { transform: translate(0, 0); }
+    50%      { transform: translate(-10px, 4px); }
+  }
+  @keyframes art-float-c {
+    0%, 100% { transform: translate(0, 0); }
+    50%      { transform: translate(6px, 8px); }
+  }
+
+  /* Bottom "terminal" — three lines cycle, only one visible at a time. */
+  .art-status {
+    position: absolute;
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    height: 2rem;
+    padding: 0 0.875rem;
+    border-radius: 0.75rem;
+    background: theme('colors.navy');
+    color: theme('colors.paper');
+    font-family: theme('fontFamily.mono');
+    font-size: 11px;
+    line-height: 2rem;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 1fr;
+  }
+  .art-status > span {
+    grid-row: 1;
+    grid-column: 1;
+    opacity: 0;
+    animation: art-status 12s ease-in-out infinite;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .art-status > span:nth-child(1) { animation-delay: 0s; }
+  .art-status > span:nth-child(2) { animation-delay: 4s; }
+  .art-status > span:nth-child(3) { animation-delay: 8s; }
+  @keyframes art-status {
+    0%, 33%, 100% { opacity: 0; }
+    4%, 29%       { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .art-grid,
+    .art-pulse,
+    .art-core-dot,
+    .art-chip,
+    .art-status > span {
+      animation: none !important;
+    }
+    /* Show only the first status line when motion is reduced. */
+    .art-status > span { opacity: 0; }
+    .art-status > span:first-child { opacity: 1; }
+  }
+</style>

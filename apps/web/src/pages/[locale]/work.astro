@@ -1,65 +1,62 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import ProjectCard from '../components/ProjectCard.astro';
-import { getProjects } from '../lib/cms';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+import { getProjects } from '../../lib/cms';
+import { LOCALES, getDict, isLocale, type Locale } from '../../lib/i18n';
+
+export async function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+
+const { locale: localeParam } = Astro.params;
+if (!isLocale(localeParam)) return Astro.redirect('/en');
+const locale: Locale = localeParam;
+const t = getDict(locale);
 
 const projects = await getProjects();
 
-// Pillar slugs the data already uses; label is what visitors see in the filter.
 const pillarLabels: Record<string, string> = {
-  design: 'Design',
-  dev: 'Development',
-  infra: 'Infrastructure',
-  support: 'Support',
-  consulting: 'Consulting',
+  design: t.contact.projectTypes.design,
+  dev: t.contact.projectTypes.development,
+  infra: t.contact.projectTypes.infrastructure,
+  support: t.contact.projectTypes.support,
+  consulting: t.contact.projectTypes.consulting,
 };
 
-// Distinct values derived from the data — never hardcoded.
 const industries = Array.from(new Set(projects.map((p) => p.industry))).sort();
 const pillars = Array.from(new Set(projects.flatMap((p) => p.services)))
   .filter((s) => pillarLabels[s])
   .sort();
 ---
 
-<BaseLayout
-  title="Work — Zalvice"
-  description="Selected projects across logistics, healthcare, fintech, SaaS, retail, and the public sector. Each is a system the client now runs on."
->
-  <Header slot="header" />
+<BaseLayout locale={locale} title={t.workIndex.title} description={t.workIndex.description}>
+  <Header slot="header" locale={locale} />
 
   <section class="bg-paper">
     <div class="container py-16 md:py-20 lg:py-24">
-      <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">Selected work</p>
+      <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{t.workIndex.eyebrow}</p>
       <h1 class="mt-3 max-w-3xl font-display text-h1 font-bold leading-tight">
-        <span class="heading-gradient">Systems shipped, systems still running.</span>
+        <span class="heading-gradient">{t.workIndex.headlineEmph}</span>
       </h1>
-      <p class="mt-5 max-w-2xl text-lg text-ink/75 md:text-xl">
-        A sample of the work we've done across industries. Filter by service pillar or industry to
-        find something close to what you have in mind.
-      </p>
+      <p class="mt-5 max-w-2xl text-lg text-ink/75 md:text-xl">{t.workIndex.intro}</p>
     </div>
   </section>
 
   <section class="bg-mist py-12 md:py-16">
     <div class="container">
-      {/* Filters — tiny inline script flips data attributes; no framework. */}
       <div
         class="flex flex-col gap-6 rounded-2xl border border-line bg-paper p-5 md:flex-row md:items-center md:justify-between md:p-6"
       >
         <div class="space-y-4 md:space-y-0 md:flex md:items-center md:gap-6">
           <fieldset>
             <legend class="font-mono text-[11px] uppercase tracking-wider text-muted">
-              Service
+              {t.workIndex.serviceFilterLegend}
             </legend>
             <div class="mt-2 flex flex-wrap gap-2" data-filter-group="services">
-              <button
-                type="button"
-                data-filter-value="*"
-                class="filter-chip is-active"
-              >
-                All
+              <button type="button" data-filter-value="*" class="filter-chip is-active">
+                {t.workIndex.all}
               </button>
               {
                 pillars.map((p) => (
@@ -73,15 +70,11 @@ const pillars = Array.from(new Set(projects.flatMap((p) => p.services)))
 
           <fieldset>
             <legend class="font-mono text-[11px] uppercase tracking-wider text-muted">
-              Industry
+              {t.workIndex.industryFilterLegend}
             </legend>
             <div class="mt-2 flex flex-wrap gap-2" data-filter-group="industry">
-              <button
-                type="button"
-                data-filter-value="*"
-                class="filter-chip is-active"
-              >
-                All
+              <button type="button" data-filter-value="*" class="filter-chip is-active">
+                {t.workIndex.all}
               </button>
               {
                 industries.map((i) => (
@@ -95,33 +88,25 @@ const pillars = Array.from(new Set(projects.flatMap((p) => p.services)))
         </div>
 
         <p class="font-mono text-[11px] text-muted">
-          <span data-result-count>{projects.length}</span> projects
+          <span data-result-count>{projects.length}</span> {t.workIndex.projects}
         </p>
       </div>
 
-      <ul
-        class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
-        data-project-grid
-      >
-        {
-          projects.map((p) => (
-            <li>
-              <ProjectCard project={p} />
-            </li>
-          ))
-        }
+      <ul class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3" data-project-grid>
+        {projects.map((p) => (
+          <li>
+            <ProjectCard project={p} locale={locale} />
+          </li>
+        ))}
       </ul>
 
-      <p
-        class="mt-10 hidden text-center text-sm text-muted"
-        data-empty-message
-      >
-        No projects match these filters. <button type="button" data-reset class="font-medium text-brand underline">Reset filters</button>.
+      <p class="mt-10 hidden text-center text-sm text-muted" data-empty-message>
+        {t.workIndex.emptyMessage} <button type="button" data-reset class="font-medium text-brand underline">{t.workIndex.resetFilters}</button>.
       </p>
     </div>
   </section>
 
-  <Footer slot="footer" />
+  <Footer slot="footer" locale={locale} />
 </BaseLayout>
 
 <style>
@@ -137,20 +122,10 @@ const pillars = Array.from(new Set(projects.flatMap((p) => p.services)))
 </style>
 
 <script>
-  /*
-   * Tiny client-side filter. ~50 lines, no framework. Reads filter
-   * selections, toggles a data-hidden attribute on each card, updates
-   * the count, shows an empty-state if nothing matches.
-   *
-   * If filters grow beyond service+industry, lift this into a React
-   * island instead.
-   */
   type Group = 'services' | 'industry';
   const active: Record<Group, string> = { services: '*', industry: '*' };
 
-  const cards = Array.from(
-    document.querySelectorAll<HTMLElement>('[data-project-card]'),
-  );
+  const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-project-card]'));
   const grid = document.querySelector<HTMLElement>('[data-project-grid]');
   const count = document.querySelector<HTMLElement>('[data-result-count]');
   const empty = document.querySelector<HTMLElement>('[data-empty-message]');

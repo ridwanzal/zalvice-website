@@ -1,11 +1,26 @@
 ---
 import MobileNav from './MobileNav.astro';
+import LocaleSwitcher from './LocaleSwitcher.astro';
+import {
+  getDict,
+  getLocaleFromUrl,
+  pathFor,
+  type Locale,
+} from '../lib/i18n';
+
+interface Props {
+  /** Active locale — usually `Astro.params.locale`. Falls back to URL detection. */
+  locale?: Locale | undefined;
+}
+
+const locale = Astro.props.locale ?? getLocaleFromUrl(Astro.url);
+const t = getDict(locale);
 
 const nav = [
-  { href: '/services', label: 'Services' },
-  { href: '/work', label: 'Work' },
-  { href: '/blog', label: 'Blog' },
-  { href: '/about', label: 'About' },
+  { href: pathFor(locale, '/services'), label: t.nav.services },
+  { href: pathFor(locale, '/work'), label: t.nav.work },
+  { href: pathFor(locale, '/blog'), label: t.nav.blog },
+  { href: pathFor(locale, '/about'), label: t.nav.about },
 ];
 
 const currentPath = Astro.url.pathname;
@@ -13,7 +28,11 @@ const currentPath = Astro.url.pathname;
 
 <header class="sticky top-0 z-40 bg-paper/90 backdrop-blur border-b border-line">
   <div class="container flex items-center justify-between py-4">
-    <a href="/" class="inline-flex items-center" aria-label="Zalvice home">
+    <a
+      href={pathFor(locale, '/')}
+      class="inline-flex items-center gap-3"
+      aria-label={t.nav.home}
+    >
       <img
         src="/logos/logos.svg"
         alt="Zalvice"
@@ -21,8 +40,11 @@ const currentPath = Astro.url.pathname;
         height="40"
         class="h-[1.875rem] w-auto"
       />
+      <span class="hidden lg:inline-block border-l border-line pl-3 font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
+        {t.nav.tagline}
+      </span>
     </a>
-    <nav aria-label="Primary">
+    <nav aria-label={t.nav.primaryLabel} class="flex items-center gap-3">
       <ul class="hidden md:flex items-center gap-6 text-sm">
         {
           nav.map((item) => (
@@ -31,7 +53,9 @@ const currentPath = Astro.url.pathname;
                 href={item.href}
                 class:list={[
                   'transition-colors hover:text-brand',
-                  currentPath.startsWith(item.href) ? 'text-brand' : 'text-ink',
+                  currentPath === item.href || currentPath.startsWith(item.href + '/')
+                    ? 'text-brand'
+                    : 'text-ink',
                 ]}
               >
                 {item.label}
@@ -41,15 +65,18 @@ const currentPath = Astro.url.pathname;
         }
         <li>
           <a
-            href="/contact"
+            href={pathFor(locale, '/contact')}
             class="inline-flex items-center rounded-full bg-brand px-4 py-2 text-paper hover:bg-navy transition-colors"
           >
-            Start a project
+            {t.nav.startProject}
           </a>
+        </li>
+        <li>
+          <LocaleSwitcher locale={locale} />
         </li>
       </ul>
     </nav>
 
-    <MobileNav items={nav} currentPath={currentPath} />
+    <MobileNav items={nav} currentPath={currentPath} locale={locale} />
   </div>
 </header>

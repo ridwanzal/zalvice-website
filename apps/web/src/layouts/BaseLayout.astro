@@ -1,24 +1,32 @@
 ---
 import '../styles/globals.css';
 import SEO from '../components/SEO.astro';
+import { getLocaleFromUrl, getDict, type Locale } from '../lib/i18n';
 
 interface Props {
   title: string;
   description?: string | undefined;
   ogImage?: string | undefined;
   noindex?: boolean | undefined;
+  /** Override URL-based detection (useful for the root /index.astro). */
+  locale?: Locale | undefined;
 }
+
+const locale: Locale = Astro.props.locale ?? getLocaleFromUrl(Astro.url);
+const t = getDict(locale);
 
 const {
   title,
-  description = 'Zalvice — design, development, infrastructure, and ongoing support. One integrated team that has helped 100+ companies transform how they operate.',
+  description = t.meta.defaultDescription,
   ogImage,
   noindex,
 } = Astro.props;
+
+const skipToContent = locale === 'id' ? 'Lewati ke konten' : 'Skip to content';
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={locale}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -31,7 +39,7 @@ const {
       href="#main"
       class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-brand focus:text-paper focus:rounded-lg"
     >
-      Skip to content
+      {skipToContent}
     </a>
     <slot name="header" />
     <main id="main" class="flex-1">

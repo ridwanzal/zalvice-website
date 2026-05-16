@@ -13,6 +13,7 @@ import {
 } from 'lucide-astro';
 import type { StackCategory } from '../lib/tech-stack';
 import { deliveryStack, aiStack } from '../lib/tech-stack';
+import { getDict, type Locale } from '../lib/i18n';
 
 const iconMap = {
   layout: Layout,
@@ -34,11 +35,13 @@ function iconFor(name: string) {
 }
 
 interface Props {
+  locale: Locale;
   /** Show as a homepage section (full padding + heading) or as a slice inside another page (no outer padding). */
   variant?: 'full' | 'slice' | undefined;
 }
 
-const { variant = 'full' } = Astro.props;
+const { locale, variant = 'full' } = Astro.props;
+const t = getDict(locale);
 ---
 
 <section
@@ -52,14 +55,11 @@ const { variant = 'full' } = Astro.props;
     {
       variant === 'full' && (
         <header class="max-w-2xl">
-          <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">Technology</p>
+          <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{t.techStack.eyebrow}</p>
           <h2 id="tech-stack-heading" class="mt-3 font-display text-h2 font-bold leading-tight">
-            <span class="heading-gradient">End-to-end, with AI baked in.</span>
+            <span class="heading-gradient">{t.techStack.headlineEmph}</span>
           </h2>
-          <p class="mt-4 text-lg text-ink/75">
-            We use the same toolchain across every engagement so the work is portable and the
-            operating model is predictable. AI is a first-class layer, not a bolt-on.
-          </p>
+          <p class="mt-4 text-lg text-ink/75">{t.techStack.intro}</p>
         </header>
       )
     }
@@ -67,9 +67,9 @@ const { variant = 'full' } = Astro.props;
     {/* Subsection 1 — Delivery stack */}
     <div class="mt-12 first:mt-0">
       <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <h3 class="font-display text-xl font-semibold text-navy md:text-2xl">Our delivery stack</h3>
+        <h3 class="font-display text-xl font-semibold text-navy md:text-2xl">{t.techStack.deliveryTitle}</h3>
         <p class="font-mono text-[11px] uppercase tracking-wider text-muted">
-          What we build on
+          {t.techStack.deliveryNote}
         </p>
       </div>
 
@@ -103,10 +103,10 @@ const { variant = 'full' } = Astro.props;
     <div class="mt-16">
       <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <h3 class="font-display text-xl font-semibold text-navy md:text-2xl">
-          AI capabilities we build for you
+          {t.techStack.aiTitle}
         </h3>
         <p class="font-mono text-[11px] uppercase tracking-wider text-muted">
-          Production-grade, not demoware
+          {t.techStack.aiNote}
         </p>
       </div>
 
@@ -138,11 +138,7 @@ const { variant = 'full' } = Astro.props;
         </ul>
       </div>
 
-      <p class="mt-5 max-w-2xl text-sm text-ink/70">
-        Approach: we run pilots on Claude or GPT-4 class models first, instrument with evals from
-        day one, and keep the option to swap providers open. No vendor lock-in beyond what the
-        product demands.
-      </p>
+      <p class="mt-5 max-w-2xl text-sm text-ink/70">{t.techStack.approach}</p>
     </div>
   </div>
 </section>

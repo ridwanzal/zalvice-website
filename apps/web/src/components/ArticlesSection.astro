@@ -1,14 +1,17 @@
 ---
 import { ArrowRight, BookOpen, Settings } from 'lucide-astro';
 import type { CmsPostSummary } from '../lib/cms';
+import { getDict, pathFor, type Locale } from '../lib/i18n';
 
 interface Props {
   posts: CmsPostSummary[];
+  locale: Locale;
 }
 
-const { posts } = Astro.props;
+const { posts, locale } = Astro.props;
+const t = getDict(locale);
 
-const fmt = new Intl.DateTimeFormat('en-US', {
+const fmt = new Intl.DateTimeFormat(locale === 'id' ? 'id-ID' : 'en-US', {
   year: 'numeric',
   month: 'short',
   day: 'numeric',
@@ -23,26 +26,23 @@ const fmt = new Intl.DateTimeFormat('en-US', {
           <div class="max-w-xl">
             <p class="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.14em] text-brand">
               <BookOpen class="h-3.5 w-3.5" aria-hidden="true" />
-              Latest writing
+              {t.articles.eyebrow}
             </p>
             <h2 id="articles-heading" class="mt-3 font-display text-h2 font-bold leading-tight">
-              <span class="heading-gradient">Notes from the build floor.</span>
+              <span class="heading-gradient">{t.articles.headlineEmph}</span>
             </h2>
-            <p class="mt-3 text-lg text-ink/75">
-              Engineering, infrastructure, and operating notes from work we've shipped — managed in
-              the back office, published in minutes.
-            </p>
+            <p class="mt-3 text-lg text-ink/75">{t.articles.intro}</p>
           </div>
           <div class="flex flex-wrap items-center gap-3">
             <span class="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-3 py-1.5 font-mono text-[11px] text-muted">
               <Settings class="h-3 w-3" aria-hidden="true" />
-              Managed in /admin
+              {t.articles.managedIn}
             </span>
             <a
-              href="/blog"
+              href={pathFor(locale, '/blog')}
               class="inline-flex items-center gap-1.5 text-sm font-medium text-navy hover:text-brand"
             >
-              All articles
+              {t.articles.allArticles}
               <ArrowRight class="h-3.5 w-3.5" aria-hidden="true" />
             </a>
           </div>
@@ -52,7 +52,7 @@ const fmt = new Intl.DateTimeFormat('en-US', {
           {posts.map((post) => (
             <li>
               <a
-                href={`/blog/${post.slug}`}
+                href={pathFor(locale, `/blog/${post.slug}`)}
                 class="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-paper transition-all hover:border-navy hover:shadow-[0_12px_36px_-16px_rgba(10,37,64,0.18)]"
               >
                 <div class="relative aspect-[16/10] overflow-hidden bg-mist">
@@ -81,7 +81,7 @@ const fmt = new Intl.DateTimeFormat('en-US', {
                   <footer class="mt-auto flex items-center justify-between pt-5 font-mono text-[11px] text-muted">
                     <span>{post.authorName}</span>
                     <span>
-                      {fmt.format(new Date(post.publishedAt))} · {post.readingMinutes} min
+                      {fmt.format(new Date(post.publishedAt))} · {post.readingMinutes} {t.articles.readTimeUnit}
                     </span>
                   </footer>
                 </div>

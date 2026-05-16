@@ -1,11 +1,14 @@
 ---
 import type { CmsClient } from '../lib/cms';
+import { getDict, type Locale } from '../lib/i18n';
 
 interface Props {
   clients: CmsClient[];
+  locale: Locale;
 }
 
-const { clients } = Astro.props;
+const { clients, locale } = Astro.props;
+const t = getDict(locale);
 
 const mid = Math.ceil(clients.length / 2);
 const rowA = clients.slice(0, mid);
@@ -19,7 +22,7 @@ const LOGO_BOX_H = 56; // px — height of every logo cell.
   clients.length > 0 && (
     <section
       class="border-y border-line bg-mist py-12 md:py-16"
-      aria-label="Trusted by these companies"
+      aria-label={t.logoStrip.label}
     >
       <div class="marquee-mask space-y-8 overflow-hidden">
         <div class="marquee" data-direction="left">

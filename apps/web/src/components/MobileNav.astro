@@ -1,30 +1,17 @@
 ---
 import { ArrowRight, Mail, X, Menu, Github, Linkedin, Twitter } from 'lucide-astro';
-
-/*
- * Full-viewport mobile nav. Replaces the prior "Start" button on
- * <md screens. Hidden on md+ where the inline nav takes over.
- *
- * Mechanics (skills.md §12 patterns):
- *   - Trigger button has aria-expanded + aria-controls.
- *   - Backdrop + panel are .hidden by default so SSR is correct.
- *   - Open: set data-open on the host; body gets overflow-hidden.
- *   - Close: data-open removed; focus returned to the trigger.
- *   - Esc, backdrop tap, swipe-left, and tapping a link all close.
- *   - Focus is trapped between the close button and the last link.
- *
- * Animation respects prefers-reduced-motion via globals.css.
- */
+import LocaleSwitcher from './LocaleSwitcher.astro';
+import { getDict, pathFor, type Locale } from '../lib/i18n';
 
 type NavItem = { href: string; label: string };
 interface Props {
-  /** Nav items to render in the panel. */
   items: NavItem[];
-  /** Current pathname for active-link styling. */
   currentPath: string;
+  locale: Locale;
 }
 
-const { items, currentPath } = Astro.props as Props;
+const { items, currentPath, locale } = Astro.props as Props;
+const t = getDict(locale);
 
 const social = [
   { href: 'https://www.linkedin.com/company/zalvice', label: 'LinkedIn', Icon: Linkedin },
@@ -39,7 +26,7 @@ const social = [
     type="button"
     aria-expanded="false"
     aria-controls="mobile-nav-panel"
-    aria-label="Open menu"
+    aria-label={t.nav.openMenu}
     class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-paper text-navy transition-colors hover:border-brand hover:text-brand"
     data-mobile-nav-trigger
   >
@@ -60,13 +47,13 @@ const social = [
     class="mobile-nav-panel hidden"
     role="dialog"
     aria-modal="true"
-    aria-label="Site navigation"
+    aria-label={t.nav.siteNav}
     tabindex="-1"
     data-mobile-nav-panel
   >
     {/* Panel header */}
     <header class="flex items-center justify-between px-5 pt-5">
-      <a href="/" class="inline-flex items-center" aria-label="Zalvice home" data-mobile-nav-link>
+      <a href={pathFor(locale, '/')} class="inline-flex items-center" aria-label={t.nav.home} data-mobile-nav-link>
         <img
           src="/logos/logos.svg"
           alt="Zalvice"
@@ -77,7 +64,7 @@ const social = [
       </a>
       <button
         type="button"
-        aria-label="Close menu"
+        aria-label={t.nav.closeMenu}
         class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-paper text-navy transition-colors hover:border-brand hover:text-brand"
         data-mobile-nav-close
       >
@@ -86,7 +73,7 @@ const social = [
     </header>
 
     {/* Primary nav — oversized, generous spacing */}
-    <nav class="mt-10 px-5" aria-label="Primary">
+    <nav class="mt-10 px-5" aria-label={t.nav.primaryLabel}>
       <ul class="space-y-1">
         {
           items.map((item, i) => {
@@ -132,15 +119,15 @@ const social = [
     {/* Secondary block — pinned to the bottom */}
     <div class="mt-auto px-5 pb-8">
       <a
-        href="/contact"
+        href={pathFor(locale, '/contact')}
         data-mobile-nav-link
         class="flex items-center justify-between gap-3 rounded-2xl bg-navy px-5 py-4 text-paper transition-colors hover:bg-brand"
       >
         <span>
           <span class="block font-mono text-[11px] uppercase tracking-[0.14em] text-paper/70">
-            Ready to start?
+            {t.nav.readyToStart}
           </span>
-          <span class="mt-0.5 block font-display text-lg font-semibold">Start a project</span>
+          <span class="mt-0.5 block font-display text-lg font-semibold">{t.nav.startProject}</span>
         </span>
         <ArrowRight class="h-5 w-5" aria-hidden="true" />
       </a>
@@ -153,6 +140,10 @@ const social = [
         <Mail class="h-4 w-4" aria-hidden="true" />
         <span class="font-mono text-sm">hello@zalvice.com</span>
       </a>
+
+      <div class="mt-6">
+        <LocaleSwitcher locale={locale} variant="stacked" />
+      </div>
 
       <ul class="mt-6 flex items-center gap-3">
         {

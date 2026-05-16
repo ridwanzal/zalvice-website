@@ -1,19 +1,22 @@
 ---
 import { ArrowUpRight } from 'lucide-astro';
 import type { CmsProjectSummary } from '../lib/cms';
+import { getDict, pathFor, type Locale } from '../lib/i18n';
 
 interface Props {
   project: CmsProjectSummary;
+  locale: Locale;
 }
 
-const { project } = Astro.props;
+const { project, locale } = Astro.props;
+const t = getDict(locale);
 
 const services = project.services.join(',');
 const tech = project.techStack.join(',');
 ---
 
 <a
-  href={`/work/${project.slug}`}
+  href={pathFor(locale, `/work/${project.slug}`)}
   class="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-paper transition-all hover:border-navy hover:shadow-[0_12px_36px_-16px_rgba(10,37,64,0.18)]"
   data-project-card
   data-industry={project.industry.toLowerCase()}
@@ -69,7 +72,7 @@ const tech = project.techStack.join(',');
     </ul>
 
     <span class="mt-auto inline-flex items-center gap-1 pt-6 text-sm font-medium text-navy group-hover:text-brand">
-      Read the case
+      {t.workDetail.readCase}
       <ArrowUpRight class="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
     </span>
   </div>

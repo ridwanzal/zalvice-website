@@ -1,12 +1,15 @@
 ---
 import { ArrowRight, Code, Compass, LifeBuoy, Palette, Server } from 'lucide-astro';
 import type { CmsService } from '../lib/cms';
+import { getDict, pathFor, type Locale } from '../lib/i18n';
 
 interface Props {
   services: CmsService[];
+  locale: Locale;
 }
 
-const { services } = Astro.props;
+const { services, locale } = Astro.props;
+const t = getDict(locale);
 
 const iconMap = {
   palette: Palette,
@@ -21,28 +24,42 @@ type IconName = keyof typeof iconMap;
 function getIcon(name: string) {
   return (iconMap as Record<string, (typeof iconMap)[IconName] | undefined>)[name] ?? Palette;
 }
+
+/*
+ * Service name is read from the CMS today (which is English-only until the
+ * admin batch lands). Until then, override the visible label per locale via
+ * the projectTypes dictionary keyed by slug.
+ */
+function localizedName(slug: string, fallback: string): string {
+  const map = t.contact.projectTypes;
+  switch (slug) {
+    case 'design':
+      return map.design;
+    case 'development':
+      return map.development;
+    case 'infrastructure':
+      return map.infrastructure;
+    case 'support':
+      return map.support;
+    case 'consulting':
+      return map.consulting;
+    default:
+      return fallback;
+  }
+}
 ---
 
 <section id="what-we-do" class="bg-paper py-20 md:py-28 lg:py-32">
   <div class="container">
     <header class="max-w-2xl">
-      <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">What we do</p>
+      <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{t.services.eyebrow}</p>
       <h2 class="mt-3 font-display text-h2 font-bold leading-tight">
-        <span class="heading-gradient">Five pillars, one integrated team.</span>
+        <span class="heading-gradient">{t.services.headlineEmph}</span>
       </h2>
-      <p class="mt-4 text-lg text-ink/75">
-        We deliver design, development, infrastructure, support, and consulting together — not as
-        five separate quotes. One team, one shared standard, end to end.
-      </p>
+      <p class="mt-4 text-lg text-ink/75">{t.services.intro}</p>
     </header>
 
-    {/*
-      Scroll-snap carousel — pure CSS, zero JS. Each card snaps to the
-      viewport edge; users swipe on mobile and scroll horizontally on
-      desktop. Hidden scrollbar on the container; visual scroll indicator
-      shown below for affordance.
-    */}
-    <div class="services-scroller mt-12 -mx-4 md:-mx-6 lg:-mx-8" role="region" aria-label="Services">
+    <div class="services-scroller mt-12 -mx-4 md:-mx-6 lg:-mx-8" role="region" aria-label={t.services.eyebrow}>
       <ul class="services-track">
         {
           services.map((service) => {
@@ -50,7 +67,7 @@ function getIcon(name: string) {
             return (
               <li class="services-item">
                 <a
-                  href={`/services#${service.slug}`}
+                  href={pathFor(locale, `/services#${service.slug}`)}
                   class="group flex h-full flex-col rounded-2xl border border-line bg-paper p-6 transition-all hover:border-navy hover:shadow-[0_12px_36px_-16px_rgba(10,37,64,0.18)]"
                   data-analytics="cta_click"
                   data-analytics-location="homepage_services"
@@ -59,7 +76,9 @@ function getIcon(name: string) {
                   <span class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-mist text-brand transition-colors group-hover:bg-brand group-hover:text-paper">
                     <Icon class="h-5 w-5" aria-hidden="true" />
                   </span>
-                  <h3 class="mt-5 font-display text-xl font-semibold text-navy">{service.name}</h3>
+                  <h3 class="mt-5 font-display text-xl font-semibold text-navy">
+                    {localizedName(service.slug, service.name)}
+                  </h3>
                   <p class="mt-2 text-sm leading-relaxed text-ink/70">{service.description}</p>
                   <ul class="mt-5 flex flex-wrap gap-2">
                     {service.capabilities.slice(0, 3).map((cap) => (
@@ -69,7 +88,7 @@ function getIcon(name: string) {
                     ))}
                   </ul>
                   <span class="mt-auto inline-flex items-center gap-1.5 pt-6 text-sm font-medium text-brand">
-                    Learn more
+                    {t.services.learnMore}
                     <ArrowRight
                       class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
                       aria-hidden="true"
@@ -83,7 +102,7 @@ function getIcon(name: string) {
       </ul>
     </div>
 
-    <p class="mt-4 text-center text-xs text-muted md:hidden">Swipe to see more →</p>
+    <p class="mt-4 text-center text-xs text-muted md:hidden">{t.services.swipeHint}</p>
   </div>
 </section>
 
@@ -102,11 +121,6 @@ function getIcon(name: string) {
   .services-track {
     display: grid;
     grid-auto-flow: column;
-    /*
-     * Mobile: each card is ~80% of viewport, leaves a sliver of the next
-     * card visible (the carousel affordance). Desktop: equal columns,
-     * no scroll needed if everything fits.
-     */
     grid-auto-columns: 80%;
     gap: 1rem;
     padding: 0.5rem 1rem;
