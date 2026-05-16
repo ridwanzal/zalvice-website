@@ -46,9 +46,11 @@ export async function authRoutes(fastify: FastifyInstance) {
       const { email, password, redirect } = parsed.data;
       const ip = req.ip;
 
-      const failureRedirect =
-        (typeof req.body === 'object' && req.body && (req.body as { redirect?: string }).redirect) ??
-        '/admin';
+      const rawRedirect =
+        typeof req.body === 'object' && req.body
+          ? (req.body as { redirect?: string }).redirect
+          : undefined;
+      const failureRedirect = rawRedirect ?? '/admin';
       const safeFailureRedirect = /^\/admin(\/.*)?$/.test(failureRedirect)
         ? failureRedirect
         : '/admin';

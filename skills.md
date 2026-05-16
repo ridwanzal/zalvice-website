@@ -294,46 +294,75 @@ On success: render thank-you state in-place (no redirect — preserves UTM sourc
 
 ## 6. Admin auth
 
-**Stack:** Lucia + argon2id + session cookies. No JWT (sessions revocable, simpler).
+**Stack as shipped (Pass A):** hand-rolled, ~150 LOC. argon2id for passwords, opaque session id (random 32 bytes → base64url) stored in `user_sessions`, HMAC-signed httpOnly cookie. No Lucia, no Auth.js. See `apps/api/src/lib/auth.ts`.
 
-**Why not Auth.js / Clerk?**
-- Auth.js is fine but overkill for a 2-role internal admin.
-- Clerk costs money and we don't need social login.
-- Lucia gives us full control and ~200 lines of code total.
+**Why hand-rolled?**
+- Lucia v3 changed shape from the original recipe and the API surface is bigger than what a 2-role internal admin needs.
+- Hand-rolled removes a dep and gives us full control of every code path the lockout / session-rotation logic touches.
+- ~150 LOC is small enough to review in a sitting.
 
-**Session config:**
+**Primitives:**
 
 ```ts
-// apps/api/src/lib/auth.ts
-import { Lucia } from 'lucia';
-import { Mysql2Adapter } from '@lucia-auth/adapter-mysql';
-
-export const lucia = new Lucia(
-  new Mysql2Adapter(pool, { user: 'admin_users', session: 'user_sessions' }),
-  {
-    sessionCookie: {
-      attributes: { secure: env.NODE_ENV === 'production', sameSite: 'lax' },
-    },
-    getUserAttributes: (data) => ({ email: data.email, role: data.role, name: data.name }),
-  }
-);
+createSession(userId, { ip, userAgent })  // → { id, expiresAt }
+validateSession(id)                        // → { user, session } | null
+invalidateSession(id)                      // → void
+recordLoginAttempt({ email, ip, success })
+isLockedOut({ email, ip })                 // boolean
+signSessionCookie(id)                      // → "${id}.${hmac}"
+unwrapSessionCookie(raw)                   // → id | null (constant-time HMAC verify)
+hashPassword / verifyPassword              // argon2id
+verifyPasswordConstantTime(hash | null, plain)  // runs argon2 even on null
 ```
+
+**Plugin pattern:**
+
+```ts
+// apps/api/src/plugins/session.ts
+fastify.addHook('onRequest', async (req) => {
+  const raw = req.cookies[SESSION_COOKIE];
+  const id = unwrapSessionCookie(raw);
+  req.auth = id ? await validateSession(id) : null;
+});
+
+fastify.decorate('requireAdmin', async (req) => {
+  if (!req.auth) throw fastify.httpErrors.unauthorized();
+});
+```
+
+Plugin order matters — `@fastify/cookie` → `@fastify/formbody` → session → routes.
 
 **Password hashing:** `@node-rs/argon2` with defaults (memoryCost 19456, timeCost 2). Don't tune lower.
 
 **Brute force defense:**
-- Login endpoint: rate-limit by IP (10/hour) AND by email (5/hour). Track in `login_attempts` table.
-- After 5 failed attempts on an email, require 15-minute cooldown.
-- Never reveal whether the email exists ("Invalid email or password" — never "User not found").
-- **Constant-time comparison:** always run argon2 verify even on unknown emails (use a precomputed dummy hash). Prevents timing oracle.
+- Rate-limit by IP (10/hour) AND by email (5/hour). Track in `login_attempts` table.
+- `verifyPasswordConstantTime` runs the argon2 verify even on unknown emails (precomputed dummy hash) — prevents user enumeration via response timing.
+- Never reveal whether the email exists ("invalid email or password" only).
 
-**Session rotation:** rotate session ID on login, on logout (invalidate), and on privilege change.
+**HTML vs JSON dispatch on the login route:**
+- `Accept: text/html` → 303 redirect to `/admin/login?error=1&redirect=…` on failure.
+- Otherwise → standard `httpErrors.unauthorized()`.
+- The admin pages POST forms (not fetch), so they get the redirect path; API consumers see JSON.
 
-**2FA (optional v1, recommended v1.1):** TOTP via `otpauth` library.
+**Session rotation:** rotate session ID on logout (invalidate row). On login, we issue a fresh id every time — no resumption of expired sessions.
 
-**CSRF on admin POSTs:** `@fastify/csrf-protection` plugin. Token injected into every admin page render. Skip for `GET` and for JSON endpoints called with `Authorization: Bearer` (none today).
+**2FA:** schema has `totp_secret` ready; implementation lives in Pass B.
+
+**CSRF:** double-submit cookie pattern with `@fastify/csrf-protection` is in PRD §10 but **not yet wired** — Pass A relies on `SameSite=Lax` + HTML form posts staying same-origin. Wire CSRF tokens before exposing any admin route to a CORS origin.
 
 **Logout = session delete + clear cookie.** Don't rely on the cookie expiring.
+
+**Admin web side:**
+- `/admin/*` pages are SSR (`export const prerender = false`).
+- `lib/admin.ts` exports `requireAdmin(Astro)` returning `{ user, redirect: null }` or `{ user: null, redirect: Response }`. Pattern at the top of each page:
+
+```astro
+const auth = await requireAdmin(Astro);
+if (!auth.user) return auth.redirect;
+const user = auth.user;
+```
+
+This shape exists specifically because top-level `return` in Astro frontmatter confuses `astro check`'s code-flow pass — importing `redirectToLogin` and using it via `return redirectToLogin(...)` gets flagged as "declared but never read." Folding both into one return restores the visible use.
 
 ---
 

@@ -1,10 +1,11 @@
 # Zalvice.com — Product Requirements Document
 
 **Project:** Zalvice.com marketing & lead-generation website
-**Version:** 1.2
+**Version:** 1.3
 **Status:** Draft for review
 **Last updated:** May 2026
 
+> **Changelog (v1.3):** Backoffice landed (Pass A) — `/admin/login`, dashboard, posts CRUD, projects CRUD, hand-rolled session auth on MySQL with argon2id + brute-force lockout. `posts` and `projects` now carry a `locale` enum (en/id) with `(slug, locale)` uniqueness; each row is single-locale per PRD §13.6. CMS adapter signatures changed: `getProjects(locale)`, `getProjectBySlug(locale, slug)`, `getLatestPosts(locale, limit)`. First Drizzle migration committed (`0000_romantic_wither.sql`). Deferred to Pass B: media upload pipeline (R2/ClamAV), scheduled-publish worker, audit log, 2FA, locale-aware bilingual authoring on one record.
 > **Changelog (v1.2):** Added Consulting as a 5th service pillar; documented the offcanvas mobile nav, frosted backdrop, and logo marquee patterns; added Plus Jakarta Sans pairing to the typography spec; refreshed the homepage section list to reflect what shipped (TechStack between Services and Process, 5-card scroll-snap carousel instead of 4-card grid). See §15 "Build status" for what's implemented vs spec.
 
 | Field | Value |
@@ -306,8 +307,8 @@ All editable content lives in MySQL behind a lightweight admin. Astro reads via 
 
 | Entity | Key fields |
 |---|---|
-| `posts` | id, slug (unique), title, excerpt, body_md, cover_image_id, category_id, author_id, status (draft/scheduled/published/archived), published_at, scheduled_for, created_at, updated_at, seo_title, seo_description, og_image_id, featured (bool), tags (json array of slugs), reading_minutes (int, computed) |
-| `projects` | id, slug (unique), client_name, title, summary, body_md, hero_image_id, year, industry, featured (bool), featured_order (int), services (json array of pillar slugs), tech_stack (json array of strings), outcomes (json array of `{label, value, unit}`), team_size, duration_months, status (draft/published/archived), published_at, seo_title, seo_description, og_image_id |
+| `posts` | id, slug, **locale (en/id)**, title, excerpt, body_md, cover_image_url, cover_image_alt, cover_image_id, category_slug, author_name, status (draft/scheduled/published/archived), published_at, scheduled_for, reading_minutes, featured (bool), seo_title, seo_description, created_at, updated_at. **Unique constraint on (slug, locale)** — same slug can exist in EN and ID. |
+| `projects` | id, slug, **locale (en/id)**, client_name, title, summary, body_md, hero_image_url, hero_image_alt, hero_image_id, year, industry, featured (bool), featured_order (int), services (json array of pillar slugs, includes `consulting` since v1.2), tech_stack (json array), outcomes (json array of `{label, value, unit}`), team_size, duration_months, status (draft/published/archived), published_at, seo_title, seo_description, created_at, updated_at. **Unique on (slug, locale)**. |
 | `project_images` | id, project_id, image_id, caption, sort_order |
 | `services` | id, slug (unique), name, pillar (design/dev/infra/support), description, capabilities (json), icon (lucide name), engagement_model (text), sort_order |
 | `clients` | id, name, logo_image_id, website, industry, featured (bool), sort_order, consent_to_display (bool, default false) |
@@ -318,7 +319,8 @@ All editable content lives in MySQL behind a lightweight admin. Astro reads via 
 | `media` | id, filename, url, alt_text (not null), width, height, mime_type, bytes, uploaded_by, uploaded_at, focal_x (0–1), focal_y (0–1) |
 | `leads` | id, name, email, company, phone, project_type, budget_range, timeline, message, how_heard, source, ip, user_agent, utm (json), referer, created_at, status (new/qualified/contacted/won/lost), notes (text), assigned_to (admin_user_id) |
 | `admin_users` | id, email (unique), password_hash, role (admin/editor), name, created_at, last_login, totp_secret (nullable), disabled (bool) |
-| `user_sessions` | id, user_id, expires_at, created_at, ip, user_agent |
+| `user_sessions` | id (64-char base64url), user_id, expires_at, created_at, ip, user_agent |
+| `login_attempts` | id, email, ip, success (bool), created_at — feeds the per-IP + per-email brute-force lockout (no Redis dep) |
 | `login_attempts` | id, email, ip, success (bool), created_at |
 | `stats` | id, key (unique, e.g. `companies_served`), value (number), label, suffix (e.g. `+`), sort_order |
 | `audit_log` | id, actor_user_id, action, entity, entity_id, before (json), after (json), created_at |
@@ -694,6 +696,12 @@ Where the implementation actually stands. Updated alongside the doc when scope c
 - **/work** + **/work/[slug]** — card grid with two-axis filter (CSS + ~50 LOC inline DOM JS), 6 prerendered detail pages, JSON-LD CreativeWork.
 - **/services** — 5 pillar sections (sticky left rail on desktop), "What you get" / Engagement / Selected case studies per pillar, "Bought separately…" integrated-team callout, FAQ via native `<details>`.
 - **Logos** — `apps/web/public/logos/logos.svg` (header + footer), `apps/web/public/clients/1.png`…`24.png` (marquee).
+- **i18n** — `/en/*` and `/id/*` trees with a `[locale]` route segment, `lib/i18n/{en,id}.ts` dictionaries (id.ts typed against `typeof en.dict`), `LocaleSwitcher` in the header (compact pill group) + mobile nav (stacked card), `/` → `/en` via `redirects` in `astro.config.mjs`.
+- **Backoffice (Pass A)** at `/admin/*` (all SSR) — login page, dashboard with counts, posts list/new/edit, projects list/new/edit, soft-delete via archive. Shared `AdminLayout` with sidebar + mobile tab nav. `requireAdmin()` helper folds session validation + redirect-to-login into one call.
+- **Hand-rolled session auth** (`apps/api/src/lib/auth.ts`, ~150 LOC) — argon2id, signed httpOnly cookies, constant-time password verify, brute-force lockout (5/email/hr + 10/IP/hr) backed by the `login_attempts` table.
+- **Admin API** at `/api/auth/{login,logout,me}` and `/api/admin/{posts,projects}/*`. HTML form posts on failure redirect to `/admin/login?error=1`; JSON callers see standard `httpErrors`.
+- **CMS reads (live mode)** — `/api/cms/{posts/latest, projects, projects/[slug], team}` with `?locale=` filter. `CMS_MODE=live` swaps the web `cms.ts` getters from fixtures to the API.
+- **First Drizzle migration** — `packages/db/src/migrations/0000_romantic_wither.sql`. Generated by `drizzle-kit 0.27`. Covers all 10 tables including the new `admin_users / user_sessions / login_attempts`.
 
 ### Stubbed (route exists, page is placeholder)
 
@@ -701,11 +709,14 @@ Where the implementation actually stands. Updated alongside the doc when scope c
 - `/404` — minimal stub.
 - `/privacy`, `/terms`, `/500`, `/sitemap.xml`, `/rss.xml`, `/robots.txt` — not yet built.
 
-### Not started
+### Not started (Pass B for the admin; separate batches for the rest)
 
-- **Admin CMS** at `/admin/*` — Lucia auth, CRUD for `projects` / `posts` / `team_members` / `clients` / `media`, markdown editor, media upload pipeline (R2 + ClamAV), audit log.
-- **Fastify API endpoints** — `/api/health` and `/api/cms/{stats,services,clients}` exist; everything else (`/api/cms/posts`, `/api/cms/projects`, `/api/cms/team`, `/api/leads`, `/api/admin/*`) is unimplemented. The web app currently runs on `CMS_MODE=fixture` exclusively.
-- **Drizzle migrations** — schemas exist (`stats`, `clients`, `services`, `media`, `posts`, `projects`, `team_members`), but no migration files have been generated. `pnpm db:generate` from a live DATABASE_URL is the next step.
+- **Media library** — image uploads (R2 + ClamAV + EXIF strip), focal point picker, alt-text required at upload. Posts/projects currently accept only a URL string.
+- **Scheduled publish worker** — `scheduled_for` is a column today but nothing promotes `scheduled` → `published`. Need a cron-style runner.
+- **Audit log** entries on every admin mutation (per-row `before`/`after` JSON).
+- **2FA** for admin accounts (TOTP).
+- **Locale-aware bilingual authoring** on a single record (`translation_group_id`). Today an admin creates two rows, one per locale.
+- **Lead intake** — `/api/leads` endpoint. The contact form posts there but the route doesn't exist.
 - **Tests** — no Vitest or Playwright suites yet.
 - **CI** — no `.github/workflows/*.yml` yet.
 
