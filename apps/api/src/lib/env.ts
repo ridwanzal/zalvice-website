@@ -1,4 +1,27 @@
+import { config as loadDotenv } from 'dotenv';
+import { resolve } from 'node:path';
 import { z } from 'zod';
+
+/*
+ * Load env files at boot, before reading process.env. Order matters —
+ * later files override earlier ones, so .env.local wins. Looks both at
+ * the api package root and the repo root; the repo root is where the
+ * shared .env (per .env.example) lives.
+ *
+ * Skipped under NODE_ENV=production: production runtimes inject env via
+ * the platform (Fly, Railway), not from a file.
+ */
+if (process.env.NODE_ENV !== 'production') {
+  const candidates = [
+    resolve(process.cwd(), '.env'),
+    resolve(process.cwd(), '.env.local'),
+    resolve(process.cwd(), '../../.env'),
+    resolve(process.cwd(), '../../.env.local'),
+  ];
+  for (const path of candidates) {
+    loadDotenv({ path, override: false });
+  }
+}
 
 const Env = z.object({
   NODE_ENV: z.enum(['development', 'staging', 'production', 'test']).default('development'),
