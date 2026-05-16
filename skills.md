@@ -30,6 +30,10 @@ Each section is a **skill** — a self-contained pattern you can apply when impl
 20. [Webhook-driven rebuilds — publish → deploy](#20-webhook-driven-rebuilds)
 21. [i18n-ready scaffolding (deferred but planned)](#21-i18n-ready-scaffolding)
 22. [Feature flags — light-touch toggles](#22-feature-flags)
+23. [Fixture-first CMS pipeline](#23-fixture-first-cms-pipeline)
+24. [Logo marquee — CSS-only, two-row, edge-fade](#24-logo-marquee)
+25. [Scroll-snap carousel — when not to use a JS carousel](#25-scroll-snap-carousel)
+26. [Mobile offcanvas nav — full-viewport, frosted, no framework](#26-mobile-offcanvas-nav)
 
 ---
 
@@ -126,7 +130,9 @@ const projects = await getPublishedProjects();
 
 ## 3. Carousel / showcase island
 
-**Library choice:** `embla-carousel-react` — small (~8KB gzip), accessible, framework-friendly, no opinionated styling.
+> **Decision order:** before reaching for any JS carousel, evaluate whether [§25 scroll-snap](#25-scroll-snap-carousel) covers the requirement. The default homepage Services carousel and the Work index card row are both scroll-snap, no JS. Reach for Embla only when you genuinely need arrow controls + dot pagination + autoplay logic.
+
+**Library choice (when JS is justified):** `embla-carousel-react` — small (~8KB gzip), accessible, framework-friendly, no opinionated styling.
 
 **Why not Swiper?** Bigger bundle, more features than we need, harder to style with Tailwind.
 
@@ -1042,6 +1048,285 @@ if (flags.ROUND_ROBIN_LEADS) {
 **For the web side** (build-time): a tiny generator script writes `apps/web/src/lib/flags.generated.ts` from env at build, so flags compile-tree-shake in islands.
 
 When we outgrow this (>10 active flags or need % rollouts), move to GrowthBook (open-source, self-hostable). Not before.
+
+---
+
+## 23. Fixture-first CMS pipeline
+
+**Goal:** every CMS getter works without an API or a database. A fresh `git clone && pnpm install && pnpm dev` renders the whole site.
+
+**Choice / why:** the marketing site renders almost entirely at build time. If reads required a live API the developer loop would be `up MySQL → run migrations → seed → start API → start web`. Fixture mode collapses that to `pnpm dev`. Trade-off: every CMS getter has two code paths and two corresponding fixtures.
+
+**Pattern:**
+
+```ts
+// apps/web/src/lib/cms.ts
+const ServiceSchema = z.object({ /* ... */ });
+export type CmsService = z.infer<typeof ServiceSchema>;
+
+export async function getServices(): Promise<CmsService[]> {
+  if (env.CMS_MODE === 'fixture') return fixtureServices;
+  return fetchCms('/services', z.array(ServiceSchema), 'services');
+}
+```
+
+```ts
+// apps/web/src/lib/cms.fixtures.ts
+export const fixtureServices: CmsService[] = [ /* shape matches API response */ ];
+```
+
+`env.CMS_MODE` is `'fixture' | 'live'`, sourced from `import.meta.env.CMS_MODE` with a default of `'fixture'`. `.env.example` ships with `CMS_MODE=fixture`.
+
+**Rules:**
+
+1. **Same Zod schema** parses fixture and live data. Drift between fixture shape and DB shape is exactly the kind of bug this pattern is designed to catch — keep them in sync by typing both as `CmsX` and importing from the same place.
+2. **Live mode validates at the boundary.** `fetchCms` always runs `schema.parse(response[key])` so a renamed column blows up at build time, not in production.
+3. **Fixtures are realistic.** Same length distribution (24 clients, 6 projects, 8 team members), same null/empty patterns. A fixture with only 2 entries hides layout bugs that show up at 24.
+4. **Don't `fetch()` directly from `.astro` files.** Always go through a getter in `cms.ts`. This is what makes fixture mode possible — there's exactly one place that knows about the mode flag.
+5. **Live mode lives behind a build-token header.** `fetchCms` sends `x-build-token: env.BUILD_TOKEN`; the Fastify CMS routes verify it (`apps/api/src/routes/cms.ts`). Browsers never call `/api/cms/*` directly.
+
+**When to leave fixture mode:**
+
+- The team is editing content and wants to see edits without redeploying → spin up the API + MySQL, set `CMS_MODE=live`.
+- Production builds always run `CMS_MODE=live` against the deployed API.
+
+**Adding a new entity:**
+
+1. Schema file in `packages/db/src/schema/`, exported from `index.ts`.
+2. Zod schema + `Cms<Entity>` type in `apps/web/src/lib/cms.ts`.
+3. Fixture in `apps/web/src/lib/cms.fixtures.ts` with realistic length.
+4. Getter in `cms.ts` with the `if (env.CMS_MODE === 'fixture')` branch.
+5. Fastify route under `apps/api/src/routes/cms.ts` for live mode.
+6. Query helper in `packages/db/src/queries/` if it isn't a single-table read.
+
+**Traps:**
+
+- Forgetting to update fixtures when the DB schema changes. The Zod parse will fail loudly in live mode but silently succeed in fixture mode (because the fixture is already wrong-but-matching-itself). Add a unit test that imports both `fixtureX` and `XSchema` and round-trips.
+- Tightening a validator (`.url()` from `.min(1)`) without checking that fixtures still pass. We hit this when adding root-relative logo paths.
+
+---
+
+## 24. Logo marquee
+
+**Goal:** scroll a strip of client logos continuously, in two opposite-direction rows, with edge fade and no JS.
+
+**Choice / why:** the typical implementation reaches for `react-fast-marquee` or similar (~5KB gzip per instance). We deliberately use pure CSS — the homepage budget is tight (50KB JS) and a logo strip is the kind of "decorative motion" that should never block the main thread.
+
+**Pattern (two rows, opposite directions, seamless loop):**
+
+```astro
+<div class="marquee-mask overflow-hidden">
+  <div class="marquee" data-direction="left">
+    <ul class="marquee-track">{/* row A logos */}</ul>
+    <ul class="marquee-track" aria-hidden="true">{/* duplicate of row A */}</ul>
+  </div>
+  <div class="marquee" data-direction="right">
+    <ul class="marquee-track">{/* row B logos */}</ul>
+    <ul class="marquee-track" aria-hidden="true">{/* duplicate of row B */}</ul>
+  </div>
+</div>
+
+<style>
+  .marquee-mask {
+    mask-image: linear-gradient(to right, transparent 0, black 8%, black 92%, transparent 100%);
+  }
+  .marquee { display: flex; width: max-content; animation: marquee-left 50s linear infinite; }
+  .marquee[data-direction='right'] { animation-name: marquee-right; }
+  .marquee:hover { animation-play-state: paused; }
+  .marquee-track { display: flex; gap: 4.5rem; padding-right: 4.5rem; }
+  @keyframes marquee-left  { from { transform: translateX(0); }   to { transform: translateX(-50%); } }
+  @keyframes marquee-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+  @media (prefers-reduced-motion: reduce) { .marquee { animation: none; } }
+</style>
+```
+
+**Why the duplicate row:** each row is `width: max-content`, so the two tracks together are 2× the row width. Translating by `-50%` advances exactly one track and the duplicate snaps into the original's position — loop is seamless and the user can't see a "reset." Mark the duplicate `aria-hidden="true"` so screen readers don't hear each client twice.
+
+**Visual parity for varying logo sizes:**
+
+The single most common bug: logos look hugely unequal because intrinsic dimensions vary. Fix is a **fixed-size cell** with `object-contain` inside:
+
+```astro
+<li style="width: 176px; height: 56px"
+    class="flex items-center justify-center">
+  <img src={c.logoUrl} class="max-h-full max-w-full object-contain opacity-60 grayscale" />
+</li>
+```
+
+**Tuning:**
+
+- 50s loop feels calm. 30s is "look at this!" and reads as advertising.
+- `opacity: 0.6` baseline, `1` on hover — keeps the strip visually quiet against the rest of the page.
+- `4.5rem` gap looks generous but not stretched at 1280px. Shrink on `<sm` if you have very few logos.
+
+**Don't:**
+
+- Autoplay with a fast loop — accessibility hostile.
+- Forget the `aria-hidden` on the duplicate row.
+- Skip the reduced-motion override.
+
+Reference: `apps/web/src/components/LogoStrip.astro`.
+
+---
+
+## 25. Scroll-snap carousel
+
+**Goal:** a swipe-able row of cards on mobile that becomes a regular grid on desktop. Zero JS.
+
+**Choice / why:** Embla, Swiper, Splide all add JS to do something the browser already does well via CSS scroll-snap + overflow. We use this for the homepage Services carousel (5 cards) and the Work index hover row. We only escalate to a JS carousel when arrow buttons, dot pagination, or autoplay logic are genuinely required (PRD §5.1 H3 featured-work carousel is the one place we'll likely use Embla).
+
+**Pattern:**
+
+```astro
+<div class="scroller" role="region" aria-label="Services">
+  <ul class="track">
+    {items.map((it) => <li class="item">{/* card */}</li>)}
+  </ul>
+</div>
+
+<style>
+  .scroller {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;          /* Firefox */
+    -ms-overflow-style: none;
+  }
+  .scroller::-webkit-scrollbar { display: none; }
+
+  .track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 80%;         /* mobile: leave a peek of the next card */
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+  }
+  .item { scroll-snap-align: start; min-width: 0; }
+
+  @media (min-width: 640px) { .track { grid-auto-columns: 55%; } }
+
+  /* Desktop: equal columns, no scroll needed — looks like a grid. */
+  @media (min-width: 1024px) {
+    .track {
+      grid-auto-columns: minmax(0, 1fr);
+      overflow: visible;
+    }
+  }
+</style>
+```
+
+**The peek pattern:** `grid-auto-columns: 80%` on mobile leaves ~20% of the next card visible. That's the visual affordance that tells users they can swipe. Without it the row looks like one full-width image.
+
+**Hide the scrollbar visually but keep it functional.** Don't `overflow: hidden` — that disables the interaction entirely on desktop, and screen readers / keyboard users still expect arrow-key scrolling to work.
+
+**Affordance for users who don't realize they can swipe:** add a small hint below the row on mobile only:
+
+```astro
+<p class="mt-4 text-center text-xs text-muted md:hidden">Swipe to see more →</p>
+```
+
+**Accessibility:** the `role="region"` + `aria-label` lets a screen-reader user know they've landed on a navigable area. Each card is a normal link/button — no special focus management needed.
+
+**Don't:**
+
+- Use this when the cards must be visible without interaction (e.g. a heading-level navigation row).
+- Use it for fewer than 3 cards — the swipe makes the layout feel jittery.
+- Use it for cards that wrap to multiple rows on desktop — it forces single-row layout. If you need wrapping, use a regular grid.
+
+Reference: `apps/web/src/components/ServicesOverview.astro`.
+
+---
+
+## 26. Mobile offcanvas nav
+
+**Goal:** full-viewport navigation panel for `<md` screens. Modern frosted-backdrop styling, native dialog semantics, no framework.
+
+**Choice / why:** Headless UI / Radix `Dialog` are great, but ship React + Floating UI for what is fundamentally a `<div>` that slides in. Our implementation is one Astro component (`MobileNav.astro`) with a ~100-line inline `<script>` that handles open/close, focus trap, body-scroll lock, swipe-to-close, and `Esc`. Total cost: ~3KB JS, gated by `md:hidden` so desktop visitors ship zero.
+
+**Anatomy:**
+
+```
+<div data-mobile-nav>                       ← host; gets data-open when open
+  <button data-mobile-nav-trigger>          ← hamburger
+  <div data-mobile-nav-backdrop>            ← frosted overlay
+  <aside data-mobile-nav-panel
+         role="dialog" aria-modal="true">   ← the sliding panel
+    <button data-mobile-nav-close>          ← X
+    <nav>{links}</nav>
+    {secondary CTA / contact / social}
+  </aside>
+</div>
+```
+
+**The CSS that does the work:**
+
+```css
+.mobile-nav-panel {
+  position: fixed; inset: 0;
+  width: 100vw; height: 100dvh;        /* dvh handles iOS toolbar; fallback to vh */
+  transform: translateX(-100%);
+  transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+[data-mobile-nav][data-open] .mobile-nav-panel { transform: translateX(0); }
+
+.mobile-nav-backdrop {
+  position: fixed; inset: 0;
+  background-color: rgba(10, 37, 64, 0.45);
+  backdrop-filter: blur(10px);          /* the "modern" frosted look */
+  opacity: 0;
+  transition: opacity 220ms ease-out;
+}
+[data-mobile-nav][data-open] .mobile-nav-backdrop { opacity: 1; }
+
+/* Lock body scroll while open. Apply to <html>, not <body>, to win against iOS quirks. */
+html[data-mobile-nav-open] { overflow: hidden; }
+```
+
+**The script (key behaviors):**
+
+```ts
+// Bind once. Keep typed refs so closures don't fight `T | null`.
+const refs = { host, trigger, closer, backdrop, panel, links, lastFocus: null };
+
+function open() {
+  refs.lastFocus = document.activeElement as HTMLElement;
+  refs.host.setAttribute('data-open', '');
+  document.documentElement.setAttribute('data-mobile-nav-open', '');
+  refs.trigger.setAttribute('aria-expanded', 'true');
+  requestAnimationFrame(() => refs.closer.focus());      // skip to close so next Tab → first link
+}
+
+function close() {
+  refs.host.removeAttribute('data-open');
+  document.documentElement.removeAttribute('data-mobile-nav-open');
+  refs.trigger.setAttribute('aria-expanded', 'false');
+  (refs.lastFocus ?? refs.trigger).focus();              // return focus
+}
+
+// Focus trap on Tab between [closer, ...links].
+// Swipe-left to close: track touchstart X/Y, on touchend if Δx < -60 && |Δy| < 40 → close().
+// Esc → close.
+```
+
+**Must-haves:**
+
+- `aria-expanded` + `aria-controls` on the trigger.
+- `role="dialog"` + `aria-modal="true"` + `aria-label` on the panel.
+- Focus moves *into* the panel on open and back to the trigger on close.
+- Body scroll locked (`html[data-…-open] { overflow: hidden }`) so the page underneath doesn't jiggle.
+- All transitions disabled under `prefers-reduced-motion`.
+- Close on backdrop tap AND on link tap (otherwise the user clicks a link and is left staring at the panel).
+
+**Inline script in an Astro `.astro` file gotcha:** the project tsconfig is strict (`exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`). Closures don't pick up `if (!x) return` narrowing on the outer `const x = querySelector(...)`. Bind once into a typed `Refs` object and reference `refs.x` inside callbacks. See the CLAUDE.md "Conventions discovered in build" entry on this.
+
+**Don't:**
+
+- Use `<dialog>` element — modal `<dialog>` insists on top-layer + native styling that's a fight to override.
+- Animate `width` or `left` — they trigger layout. Use `transform: translateX()`.
+- Trap focus to only the panel's links — include the close button, otherwise Shift+Tab from the first link traps on the link itself.
+- Forget `inert` or focus-trap; one of them must keep focus contained.
+
+Reference: `apps/web/src/components/MobileNav.astro` (wired into `Header.astro`).
 
 ---
 

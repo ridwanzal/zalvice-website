@@ -1,9 +1,11 @@
 # Zalvice.com — Product Requirements Document
 
 **Project:** Zalvice.com marketing & lead-generation website
-**Version:** 1.1
+**Version:** 1.2
 **Status:** Draft for review
 **Last updated:** May 2026
+
+> **Changelog (v1.2):** Added Consulting as a 5th service pillar; documented the offcanvas mobile nav, frosted backdrop, and logo marquee patterns; added Plus Jakarta Sans pairing to the typography spec; refreshed the homepage section list to reflect what shipped (TechStack between Services and Process, 5-card scroll-snap carousel instead of 4-card grid). See §15 "Build status" for what's implemented vs spec.
 
 | Field | Value |
 |---|---|
@@ -27,7 +29,7 @@ The masthead — _"From blueprint to production — we engineer the systems comp
 - **"Engineer"** — the word signals discipline, repeatability, and engineering rigor, not just creative output. Visual language should lean technical (blueprints, system diagrams, monospaced accents) rather than purely decorative.
 - **"Systems companies rely on"** — emphasis on reliability and longevity. This is where ongoing support, SLAs, and 100+ client proof points carry the most weight.
 
-Supporting line: _"Design, development, infrastructure, and ongoing support — one integrated team that has helped 100+ companies transform how they operate."_ The four nouns (design / development / infrastructure / support) map directly to the four service pillars used throughout the site information architecture.
+Supporting line: _"Design, development, infrastructure, and ongoing support — one integrated team that has helped 100+ companies transform how they operate."_ The four nouns map directly to the first four service pillars. A fifth pillar — **Consulting** — was added in v1.2 to cover senior advisory work (architecture review, tech due diligence, fractional CTO). All five pillars are surfaced consistently in the homepage carousel, the Services page anchor nav, and the footer service column.
 
 ### What this document is, and is not
 
@@ -110,14 +112,14 @@ Utility pages (no nav): `/privacy`, `/terms`, `/404`, `/500`, `/sitemap.xml`, `/
 
 ### Header behavior
 
-- **Mobile (<768px):** logo left, hamburger right. Sheet menu slides down (full-width), traps focus, closes on `Esc` or route change.
+- **Mobile (<768px):** logo left, hamburger button right. Tap opens a **full-viewport offcanvas panel** sliding in from the left (`offcanvas-start`), 100vw × 100dvh, frosted backdrop (`backdrop-filter: blur(10px)` on navy at 45%). The panel is a true `role="dialog"` with focus trap, body scroll lock, `Esc` close, backdrop tap, and swipe-left dismissal (>60px horizontal, <40px vertical). Per-link entrance stagger. All motion respects `prefers-reduced-motion`. Implementation: `MobileNav.astro` — no framework / island.
 - **Desktop (≥768px):** logo left, inline nav center/right, primary CTA "Start a project" rightmost.
-- **Sticky:** header is sticky with a translucent backdrop on scroll. Hide on scroll-down past 200px, reveal on scroll-up (only when JS is hydrated; default is plain sticky).
+- **Sticky:** header is sticky with a translucent backdrop (`bg-paper/90 backdrop-blur`). Hide-on-scroll-down behavior is post-v1.
 
 ### Footer architecture
 
 - **Column 1:** brand + one-line positioning + social links (LinkedIn, GitHub, X)
-- **Column 2:** Services links (Design / Development / Infrastructure / Support anchors)
+- **Column 2:** Services links (Design / Development / Infrastructure / Support / **Consulting** anchors)
 - **Column 3:** Company links (About, Work, Blog, Contact, Privacy, Terms)
 - **Column 4:** Get in touch (email, primary location, "Start a project" CTA, RSS link)
 - **Bottom strip:** © Zalvice, build hash (small, monospaced — useful for support and ops)
@@ -145,15 +147,26 @@ Utility pages (no nav): `/privacy`, `/terms`, `/404`, `/500`, `/sitemap.xml`, `/
 Single scroll narrative. Each section should stand alone as a tappable, mobile-first block, but the order is intentional: lead with the promise, prove it, explain it, prove it again, ask for the meeting.
 
 **H1 — Masthead**
-- Headline: "From blueprint to production — we engineer the systems companies rely on."
-- Subhead: full supporting sentence from the brief (Design, development, infrastructure…).
+- **Two-column layout on lg+:** pitch on the left (eyebrow chip, gradient H1, subhead, CTAs, 3-stat strip), `LifecycleDiagram` card on the right (Discover → Design → Build → Operate with a live status chip).
+- Headline: "From blueprint to production — we engineer the systems companies rely on." H1 uses the `heading-gradient` utility on the first clause (`brand → navy`), navy on the rest.
 - Primary CTA: "Start a project" → `/contact`. Secondary CTA: "See our work" → `/work`.
-- Visual treatment: animated technical motif (subtle blueprint grid, system diagram, or terminal-style accent) — not stock photography. Motion respects `prefers-reduced-motion`.
-- Logo strip directly underneath: 6–10 client logos, monochrome, with a one-line lead-in: "Trusted by 100+ companies." Count is read from `stats.companies_served`, not hardcoded.
+- Visual treatment: blueprint grid background with horizontal edge-fade mask (transparent → solid 14% → solid 86% → transparent). Motion respects `prefers-reduced-motion`.
+- 3-stat strip under CTAs reads from `stats` (`companies_served`, `years_in_operation`, etc.) — never hardcoded.
 
-**H2 — Services overview**
-- Four-card grid (stacks to 1 column on mobile): Design · Development · Infrastructure · Support.
+**Logo strip (separate section, full-width)**
+- All displayable clients rendered as a **two-row marquee scrolling in opposite directions** (left row right→left, right row left→right). Edge-fade mask on both sides. Pause on hover. Disabled under reduced motion. Each logo lives in a uniform 176×56 cell so visual weight stays even regardless of source dimensions. See `skills.md` §24.
+- Lead-in text removed from the strip itself; "Trusted by N+ companies" lives on the masthead eyebrow chip instead.
+
+**H2 — Services overview (5 pillars)**
+- **Five-card scroll-snap carousel** (zero JS, pure CSS): Design · Development · Infrastructure · Support · Consulting. Each card snaps to viewport on mobile/tablet; renders as equal columns on desktop where everything fits. "Swipe to see more →" hint on mobile.
 - Each card: icon, name, one-line description, 3 capability tags, link to the corresponding services section (`/services#design` etc.).
+- See `skills.md` §25 for the scroll-snap pattern.
+
+**H2.5 — Tech stack (new section, between Services and Process)**
+- Two stacked subsections per `TechStackSection.astro`:
+  - **Our delivery stack** on light surface: 6 categories (Frontend / Backend / Mobile / Infrastructure / Data / Observability).
+  - **AI capabilities we build for you** on navy surface: 4 categories (Foundation models / Orchestration / Retrieval / Evals).
+- Content lives in `apps/web/src/lib/tech-stack.ts` — typed module, not CMS-backed yet (vendors rarely change).
 
 **H3 — Featured work carousel**
 - 3–5 featured projects pulled from the showcase, ordered by `featured_order`.
@@ -184,14 +197,20 @@ Single scroll narrative. Each section should stand alone as a tappable, mobile-f
 
 ### 5.2 Services page
 
-One long-form page (not four sub-pages) so a visitor can grasp the full offering in one read. Anchor links at top jump to each pillar.
+One long-form page (not five sub-pages) so a visitor can grasps the full offering in one read. Anchor chip nav at top jumps to each pillar.
 
-- Per pillar (Design / Development / Infrastructure / Support): overview paragraph, capabilities list (6–10 items), typical engagement model (fixed-scope / retainer / staff aug), and 1–2 linked case studies.
-- Cross-pillar callout: "One integrated team" — emphasizing that Zalvice delivers the four pillars together, not as separate quotes.
-- FAQ block at the bottom (6–8 questions) — addresses sales objections (pricing model, team size, location, IP ownership, NDAs, ongoing support terms, response time).
-- Sticky pillar nav on desktop (left rail) that scroll-spies the current section.
+- **Hero:** eyebrow ("Services"), gradient H1, intro paragraph, anchor chip nav listing all 5 pillars with their Lucide icons.
+- **One section per pillar** (Design / Development / Infrastructure / Support / Consulting), alternating `bg-paper` / `bg-mist`. Each pillar section uses a two-column layout on `lg+`:
+  - **Left (sticky on desktop):** Pillar icon + number, gradient H2, one-line description (from `services.description`), "Talk to us about [pillar]" CTA.
+  - **Right:** long-form description, "What you get" grid (6–8 items per pillar), "Engagement model" callout, "Selected case studies" — 1–2 projects pulled from `projects` where `services` array contains the pillar slug.
+- **"One integrated team" callout** — full-width navy→brand gradient card after all pillars; emphasizes that the five pillars sell as one team and reads as the closing argument before the FAQ.
+- **Tech stack slice** — full `TechStackSection` rendered with `variant="slice"` (no outer section padding, no top heading) so the technology positioning shows up on Services too.
+- **FAQ** — 8 questions, native `<details>` (no JS), addressing pricing, location, NDAs, IP ownership, minimum engagement size, support hand-off, fractional CTO, first-month rhythm.
+- **CTA** — closing panel with "Want a specific pillar — or all five?" → `/contact`.
 
-**Tracking events:** `service_pillar_view` (each), `faq_open`, `cta_click` (each pillar's "Talk to us about [pillar]").
+**Editorial overlay** — long-form pillar copy, "What you get" lists, and engagement model strings live in `apps/web/src/pages/services.astro` as a per-slug `overlay` map. The CMS row contributes name / slug / icon / short description / capability tags only. When the admin CMS lands, decide whether to migrate the overlay fields into the `services` table or keep them page-owned.
+
+**Tracking events:** `service_pillar_view` (per section in view), `faq_open`, `cta_click` (each pillar's "Talk to us about [pillar]").
 
 ### 5.3 Work index — `/work`
 
@@ -386,12 +405,14 @@ Public-facing pages use only the first 7 tokens — danger/success only appear i
 
 ### Typography
 
-Helvetica-alternative: use **Inter** as the primary typeface (open-source, full weight range, near-identical metrics to Helvetica Neue, excellent screen rendering). Fallback stack: `Inter → Helvetica → Arial → sans-serif`.
+**Two-family pairing:**
+- **Body / `font-sans`: Inter Variable** — open-source, full weight range, excellent screen rendering. Fallback: `Inter → Helvetica → Arial → sans-serif`. Self-hosted via `@fontsource-variable/inter` with `font-display: swap` and the latin + latin-ext subsets.
+- **Headings / `font-display`: Plus Jakarta Sans Variable** — geometric humanist with slightly more personality than Inter. Used automatically on `h1`–`h4` and via the `font-display` Tailwind utility on display copy (eyebrow chips, large statistics, gradient headlines). Self-hosted via `@fontsource-variable/plus-jakarta-sans`. Fallback: `Plus Jakarta Sans → Inter Variable → Inter → Helvetica → sans-serif`.
 
-- **Display / H1:** Inter 700, fluid `clamp(40px, 6vw, 72px)`, tight tracking (`-0.02em`).
-- **H2:** Inter 700, `clamp(28px, 4vw, 44px)`.
-- **H3:** Inter 600, `clamp(20px, 2.5vw, 28px)`.
-- **H4:** Inter 600, `clamp(18px, 2vw, 22px)`.
+- **Display / H1:** display font 700, fluid `clamp(40px, 6vw, 72px)`, tight tracking (`-0.02em`).
+- **H2:** display font 700, `clamp(28px, 4vw, 44px)`.
+- **H3:** display font 600, `clamp(20px, 2.5vw, 28px)`.
+- **H4:** display font 600, `clamp(18px, 2vw, 22px)`.
 - **Body:** Inter 400, 16px (17–18px on desktop), line-height 1.6.
 - **Body large (intros):** Inter 400, 18–20px.
 - **Caption / meta:** Inter 500, 13–14px, often Muted color.
@@ -654,3 +675,42 @@ Astro · Tailwind · Fastify · MySQL · Drizzle · Lucide · Inter · Pagefind 
 - **What to build:** this PRD.
 - **How to build it (rules):** [`CLAUDE.md`](./CLAUDE.md).
 - **How to build it (patterns):** [`skills.md`](./skills.md).
+
+---
+
+## 15. Build status (snapshot)
+
+Where the implementation actually stands. Updated alongside the doc when scope changes.
+
+### Shipped
+
+- **Monorepo scaffold** — pnpm workspace; `apps/web` (Astro 4 hybrid + Tailwind + React), `apps/api` (Fastify), `packages/db` (Drizzle + mysql2 + 7 schema files), `packages/config` (shared tsconfig + Tailwind preset).
+- **Design system** — full design-tokens preset, Inter + Plus Jakarta self-hosted via `@fontsource-variable/*`, `heading-gradient` utility (brand → navy diagonal).
+- **CMS adapter** — `apps/web/src/lib/cms.ts` with `CMS_MODE=fixture` (default) and `live` modes. Getters: `getStats`, `getServices`, `getClients`, `getLatestPosts`, `getProjects`, `getProjectBySlug`, `getTeamMembers`. Zod boundary on every response.
+- **Homepage** (`/`) — Masthead with `LifecycleDiagram` right column, LogoStrip (24-logo two-row marquee), ServicesOverview (5-card scroll-snap carousel), TechStackSection (delivery + AI subsections), ProcessSection, StatsBand, ArticlesSection, FinalCta. New Footer (4-col, dark surface).
+- **Mobile nav** (`MobileNav.astro`) — full-viewport offcanvas-start with frosted backdrop, focus trap, swipe-left dismissal, link stagger.
+- **/about** — hero stats, story, four principles, team grid grouped by Engineering / Design / Infrastructure / Operations.
+- **/contact** — PRD §5.8 form UI (posts to nonexistent `/api/leads` until the admin batch lands), right-rail book-a-call + email, 3 office cards.
+- **/work** + **/work/[slug]** — card grid with two-axis filter (CSS + ~50 LOC inline DOM JS), 6 prerendered detail pages, JSON-LD CreativeWork.
+- **/services** — 5 pillar sections (sticky left rail on desktop), "What you get" / Engagement / Selected case studies per pillar, "Bought separately…" integrated-team callout, FAQ via native `<details>`.
+- **Logos** — `apps/web/public/logos/logos.svg` (header + footer), `apps/web/public/clients/1.png`…`24.png` (marquee).
+
+### Stubbed (route exists, page is placeholder)
+
+- `/blog`, `/blog/[slug]`, `/blog/category/[slug]` — placeholder content; Pagefind not yet wired.
+- `/404` — minimal stub.
+- `/privacy`, `/terms`, `/500`, `/sitemap.xml`, `/rss.xml`, `/robots.txt` — not yet built.
+
+### Not started
+
+- **Admin CMS** at `/admin/*` — Lucia auth, CRUD for `projects` / `posts` / `team_members` / `clients` / `media`, markdown editor, media upload pipeline (R2 + ClamAV), audit log.
+- **Fastify API endpoints** — `/api/health` and `/api/cms/{stats,services,clients}` exist; everything else (`/api/cms/posts`, `/api/cms/projects`, `/api/cms/team`, `/api/leads`, `/api/admin/*`) is unimplemented. The web app currently runs on `CMS_MODE=fixture` exclusively.
+- **Drizzle migrations** — schemas exist (`stats`, `clients`, `services`, `media`, `posts`, `projects`, `team_members`), but no migration files have been generated. `pnpm db:generate` from a live DATABASE_URL is the next step.
+- **Tests** — no Vitest or Playwright suites yet.
+- **CI** — no `.github/workflows/*.yml` yet.
+
+### Known editorial / a11y debt
+
+- **24 client logos have `alt=""`** by explicit user decision pending real names. Lighthouse a11y will not hit the ≥95 gate until this is resolved.
+- **Rina Permata (team_members fixture) has `yearsExperience: 6`** vs the brief's "5+ years" minimum. She is ops, not a developer, so technically out of scope for the rule — flag if you want every team member uniformly ≥7.
+- **`/work/[slug]` body markdown** uses a 20-line placeholder renderer (`renderSimpleMd`) that handles `##`, paragraphs, and bullets only. The full unified/remark/shiki pipeline ships with the blog batch (see `skills.md` §7).

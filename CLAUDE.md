@@ -64,7 +64,7 @@ Full spec: see [`PRD.md`](./PRD.md). Implementation playbooks for each non-trivi
 
 1. **No new dependencies without checking first.** Run `pnpm why <pkg>` and check if an existing dep already covers it. Prefer the boring choice. Justify additions in the PR description.
 2. **No client JS on marketing pages unless wrapped as an Astro island.** A static page that ships 200KB of JS is a bug.
-3. **No hardcoded copy or numbers on the homepage.** All stats, logos, testimonials come from MySQL via the `/api/cms/*` endpoints (or build-time fetch). The "100+ companies" line reads from the `stats` table.
+3. **No hardcoded copy or numbers on the homepage.** All stats, logos, testimonials, services come from MySQL via the `/api/cms/*` endpoints (or build-time fetch). The "100+ companies" line reads from the `stats` table; "X+ yrs" on team cards reads from `team_members.years_experience`; service pillar copy comes from the `services` table.
 4. **Mobile-first Tailwind.** Default classes target ≤375px. Use `sm:`, `md:`, `lg:` to scale up. Never the reverse.
 5. **No inline color hex values.** Use Tailwind tokens defined in `tailwind.config.ts` (see Design Tokens below). If a needed color isn't a token, it shouldn't be in the design.
 6. **No images without `alt`.** Decorative images use `alt=""`. The admin enforces this on upload.
@@ -101,9 +101,13 @@ colors: {
 Public pages use only the first 7 tokens. `danger` and `success` are reserved for form-error and admin surfaces.
 
 **Typography:**
-- Font family: `Inter` (self-hosted, subset latin + latin-ext)
-- Monospace accents: `JetBrains Mono`
-- Display sizes use `clamp()` for fluid scaling — see `globals.css`
+- Body / `font-sans`: **Inter Variable** (self-hosted via `@fontsource-variable/inter`).
+- Headings / `font-display`: **Plus Jakarta Sans Variable** (self-hosted via `@fontsource-variable/plus-jakarta-sans`). Applied automatically to `h1`–`h4` via `globals.css`; use the `font-display` Tailwind class to apply elsewhere.
+- Monospace accents / `font-mono`: **JetBrains Mono**.
+- Both variable fonts ship with `font-display: swap` and subsets included.
+- Display sizes use `clamp()` for fluid scaling — see `tailwind.preset.cjs` (`text-display`, `text-h1`–`text-h4`).
+
+**Heading gradient:** `class="heading-gradient"` applies a brand → navy diagonal via `background-clip:text`. Apply on the element that contains the heading text directly (it can't have child elements other than inline spans that should also be gradient-clipped). Use sparingly — on H1 of every page and the headline of major sections, not every H3.
 
 **Spacing:** Tailwind default. Section padding rhythm: `py-16 md:py-24 lg:py-32`.
 
@@ -354,8 +358,33 @@ Lighthouse CI runs on every PR. **Performance ≥ 90** and **Accessibility ≥ 9
 | Disable a lint rule inline | Fix the code or surface the rule for repo-wide change in a PR. |
 | `git push --force` to a shared branch | Don't. Force only ever to your own feature branch with `--force-with-lease`. |
 | Commit a `WIP` or "fix later" comment | Open an issue. Comments rot; issues get triaged. |
+| Wire Embla / Swiper for a 4–8 card row | Try CSS scroll-snap first — see `skills.md` §25. Adds zero JS. |
+| Reach for Headless UI / Radix for a mobile menu | Build with the offcanvas pattern in `skills.md` §26. Native dialog/focus mgmt is ~40 lines and matches our look. |
+| Add `useState` for a homepage filter | Try inline DOM script on `data-` attributes (see `/work` filter). Reach for React only when the state graph genuinely needs it. |
+| Hardcode "5 pillars" / "4 pillars" anywhere in copy | Pull from `services.length` so the number stays right when pillars are added or removed. |
+| Use `Astro.props` with optional `T` for a component | Type as `T \| undefined` because `exactOptionalPropertyTypes: true` is on. |
+| Bump `@astrojs/sitemap` past 3.2.x | Pair it with a matching Astro upgrade (needs `astro:routes:resolved`). Otherwise the build crashes on sitemap generation. |
+| Tighten `logoUrl` validator back to `.url()` | Don't yet — local `/clients/N.png` paths must validate until the admin media table forces absolutes. |
 
 ---
+
+## Conventions discovered in build
+
+Things that bit us once. Each row is a rule with the reason in parentheses so future-you can judge edge cases.
+
+- **Service pillars are five, not four.** `design / dev / infra / support / consulting`. The `services.pillar` MySQL enum + the matching Zod enum in `apps/web/src/lib/cms.ts` must stay in sync. Adding a sixth pillar touches: schema enum, Zod enum, fixture, seed, services page anchor list, footer service column.
+- **Project routing assumes lowercase kebab-case slugs.** `getStaticPaths` over `getProjects()` builds `/work/[slug]`. If anyone introduces a slug with uppercase or spaces the build silently emits a route that's hard to share — validate at DB write time (the schema constraint is `^[a-z0-9]+(-[a-z0-9]+)*$`).
+- **`exactOptionalPropertyTypes: true` is on.** Optional `Props` in Astro components must declare `?: T | undefined`, not just `?: T`. Otherwise passing `undefined` (which Astro template syntax does for unset props) fails to type-check. SEO and BaseLayout are the canonical reference.
+- **Inline `<script>` blocks in `.astro` components are type-checked under the strict project tsconfig** — they're not loose browser globals. When `querySelector` returns `Element | null`, narrow once and rebind into a typed `Refs` object before any callback uses it. The closures don't pick up the early-return narrowing on the original `const`. Reference: `MobileNav.astro`.
+- **CMS adapter is fixture-first.** `CMS_MODE=fixture` (default in `.env.example`) reads from `apps/web/src/lib/cms.fixtures.ts` and never hits the network, so a fresh clone renders the whole site before the API or DB exist. `CMS_MODE=live` swaps to `fetch(${API_URL}/cms/...)`. Every new CMS getter needs both code paths and a Zod boundary parser. See [`skills.md` §23](./skills.md#23-fixture-first-cms-pipeline).
+- **Placeholder/local logo URLs are allowed.** The `logoUrl` validator is `z.string().min(1)`, not `.url()` — files in `apps/web/public/clients/N.png` (root-relative) and absolute R2 URLs both need to validate. Don't tighten back to `.url()` without first migrating to a media table that always stores absolutes.
+- **The client logo set has 24 entries with empty alt by design** (the user explicitly opted out of placeholder names pending real names). This is a known a11y gate violation logged in PRs touching `apps/web/src/lib/cms.fixtures.ts`. When real names land, set `name: 'Real Name'` and `logoAlt: 'Real Name'` in one pass.
+- **Marquee, scroll-snap carousel, and offcanvas nav are CSS-first.** We deliberately skipped Embla, React, and Headless UI for these because the user's perf budget is tight (50KB JS on home, 30KB on Services/About). Don't add JS-driven alternatives unless arrow controls + dot pagination are genuinely required. See `skills.md` §24 (marquee), §25 (carousel), §26 (offcanvas).
+- **Vite cache directory is hard-coded by default and can become owned by root** in sandboxed environments. `astro.config.mjs` reads `VITE_CACHE_DIR` env so CI / fresh checkouts can divert it; default behavior is unchanged otherwise.
+- **`@astrojs/sitemap` is pinned to 3.2.1.** Newer versions (3.7+) require the `astro:routes:resolved` build hook that Astro 4.16.x doesn't emit. Upgrade `@astrojs/sitemap` and Astro together, not separately.
+- **`is:inline` on JSON-LD `<script>`.** Astro emits a hint without it; the JSON-LD payload is literal, not a module, so `is:inline` is the correct fix.
+- **Project `bodyMd` rendering is a placeholder.** `apps/web/src/pages/work/[slug].astro` ships a 20-line `renderSimpleMd()` that handles `##`, paragraphs, and bullets only. The proper unified/remark/shiki pipeline (skills.md §7) lands with the blog batch. Don't try to render rich CMS markdown through the placeholder.
+- **Contact form posts to `/api/leads` which doesn't exist yet.** Form has `novalidate` so the server is the source of truth once it ships. Don't add client-side success states or `e.preventDefault()` to the form until the API handler is wired; today the browser will hit a 404 if a user submits.
 
 ## When you're stuck
 

@@ -1,13 +1,447 @@
 ---
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Code,
+  Compass,
+  LifeBuoy,
+  Palette,
+  Server,
+  Sparkles,
+} from 'lucide-astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import TechStackSection from '../components/TechStackSection.astro';
+import { getServices, getProjects } from '../lib/cms';
+
+const [services, projects] = await Promise.all([getServices(), getProjects()]);
+
+/*
+ * Per-pillar editorial overlay. The CMS row gives us slug / name / icon /
+ * description / capabilities. The fields below are page-specific copy:
+ * the longer "what you get," the engagement model, and the pillar-color
+ * accent. Kept here instead of in the DB because this content is wholly
+ * owned by the page — moving it to the CMS would be premature.
+ *
+ * Each entry maps by service.slug (5 pillars).
+ */
+type PillarOverlay = {
+  longDescription: string;
+  whatYouGet: string[];
+  engagement: string;
+};
+
+const overlay: Record<string, PillarOverlay> = {
+  design: {
+    longDescription:
+      'Product and brand design grounded in how the system actually behaves. We design alongside the engineers building it, not in a sealed studio that hands off Figma files.',
+    whatYouGet: [
+      'Product design end-to-end — IA, flows, screens, prototypes',
+      'A design system your team can extend without us',
+      'Brand identity that holds up across product, web, and motion',
+      'Research and usability testing with real users',
+      'Accessibility baked in (WCAG 2.2 AA, not retrofit)',
+      'Design tokens, components, documentation',
+    ],
+    engagement: 'Fixed-scope discovery + design sprints, or embedded designer on retainer.',
+  },
+  development: {
+    longDescription:
+      'Web, mobile, and backend engineering built to operate for years. Boring tools that age well; CI from day one; specs and tests as a default, not an afterthought.',
+    whatYouGet: [
+      'Web applications (Astro, Next.js, React)',
+      'Mobile apps (React Native, native Swift/Kotlin when needed)',
+      'APIs and services (Node, Go, Python)',
+      'Data pipelines, ETL, analytics surfaces',
+      'AI features (RAG, agents, evals — see /work for examples)',
+      'Code review, technical leadership, and pairing for your team',
+    ],
+    engagement: 'Fixed-scope MVP build, retainer team, or staff augmentation.',
+  },
+  infrastructure: {
+    longDescription:
+      'Cloud, CI/CD, and platform engineering you can rely on. We are the team that already has on-call war stories from three industries — not the team that learns them on your bill.',
+    whatYouGet: [
+      'Cloud architecture on AWS / GCP / Cloudflare',
+      'CI/CD pipelines, environments, deploy automation',
+      'Infrastructure as code (Terraform, Pulumi)',
+      'Observability — metrics, traces, logs, alerts that page the right person',
+      'Security baseline — secrets, IAM, audit trails, incident playbooks',
+      'Cost reviews; right-sizing without sacrificing reliability',
+    ],
+    engagement: 'Platform setup project, then optional ongoing operations retainer.',
+  },
+  support: {
+    longDescription:
+      'Once it ships, we stay on the wire. Monitoring, on-call, capacity planning, incident response, and the unglamorous work that keeps a system trustworthy long after launch.',
+    whatYouGet: [
+      'Managed operations across web, mobile, and infra',
+      '24/7 on-call coverage with documented response SLAs',
+      'Quarterly resilience reviews — what would have paged us, what did',
+      'Runbooks and postmortems written before, not after',
+      'Capacity and cost forecasting',
+      'Knowledge transfer to your team when you’re ready to take it back',
+    ],
+    engagement: 'Monthly retainer scaled to system complexity and traffic.',
+  },
+  consulting: {
+    longDescription:
+      'Senior advisory when you need an outside read on architecture, hiring, or technical strategy. No deliverables theatre — just experienced people telling you what we would do and why.',
+    whatYouGet: [
+      'Architecture review — second opinion on the system you are building',
+      'Tech due diligence — pre-acquisition or pre-investment',
+      'Hiring strategy — what to hire next, what to outsource',
+      'Engineering team scaling — process, rituals, on-call',
+      'Vendor and platform selection (build vs buy, framework decisions)',
+      'Workshops — RAG, evals, distributed systems, design systems',
+    ],
+    engagement: 'Day rate, weekly retainer, or scoped reviews with written deliverables.',
+  },
+};
+
+/*
+ * Map each service slug to a matching project tag in the data. The
+ * "Selected case studies" pillar slot pulls 1–2 projects whose `services`
+ * array contains the matching CMS pillar slug.
+ */
+const pillarToServiceSlug: Record<string, string> = {
+  design: 'design',
+  development: 'dev',
+  infrastructure: 'infra',
+  support: 'support',
+  consulting: 'consulting',
+};
+
+const iconMap: Record<string, typeof Palette> = {
+  palette: Palette,
+  code: Code,
+  server: Server,
+  'life-buoy': LifeBuoy,
+  compass: Compass,
+};
+
+function iconFor(name: string) {
+  return iconMap[name] ?? Sparkles;
+}
+
+const faqs = [
+  {
+    q: 'How do you price an engagement?',
+    a: 'Discovery is fixed-fee so you can compare apples to apples. Build engagements are usually fixed-scope per phase with a transparent rate card; retainers price by team composition and on-call expectations.',
+  },
+  {
+    q: 'Where is the team based?',
+    a: 'Jakarta HQ + Singapore office, remote-first across six time zones. We pick the working hours around the engagement, not the other way around.',
+  },
+  {
+    q: 'Do you sign NDAs?',
+    a: 'Yes — we have a standard mutual NDA we can sign within a day, or we can review yours.',
+  },
+  {
+    q: 'Who owns the IP?',
+    a: 'You do. Once invoices are settled, all work product (code, designs, infra, documentation) transfers to you. We retain rights only to reusable tooling and templates we brought in.',
+  },
+  {
+    q: 'How small is too small?',
+    a: 'We tend to start at around the $25k mark — anything smaller usually fits a freelancer better than a team. Big-picture: if you would not bring it to your in-house engineering team for a 6-week sprint, it is probably too small.',
+  },
+  {
+    q: 'How do you handle ongoing support after a build?',
+    a: 'Most build engagements roll directly into a Support retainer — the team that shipped it stays on call with documented response SLAs. You can also opt out and take it back any time.',
+  },
+  {
+    q: 'Do you do fractional CTO work?',
+    a: 'Yes — see the Consulting pillar. Day rate or weekly retainer with written architecture / hiring / vendor recommendations.',
+  },
+  {
+    q: 'What does a typical first month look like?',
+    a: 'Week 1: discovery — interviews, system audit, success metrics. Week 2: design + technical spike in parallel. Week 3: end-of-discovery review with a scoped plan + estimate. Week 4: kickoff if we both agree to proceed.',
+  },
+];
 ---
-<BaseLayout title="Services — Zalvice">
+
+<BaseLayout
+  title="Services — Zalvice"
+  description="Design, development, infrastructure, support, and consulting — delivered together by one integrated team. No multi-vendor handoffs, no junior bait-and-switch."
+>
   <Header slot="header" />
-  <section class="py-12 container">
-    <h2 class="text-2xl font-semibold">Services</h2>
-    <p class="mt-4">Design · Development · Infrastructure · Support — One long-form page covering all pillars.</p>
+
+  {/* Hero */}
+  <section class="relative overflow-hidden bg-paper">
+    <div aria-hidden="true" class="absolute inset-0 opacity-[0.04] services-grid"></div>
+    <div class="container relative py-20 md:py-28 lg:py-32">
+      <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">Services</p>
+      <h1 class="mt-3 max-w-4xl font-display text-h1 font-bold leading-tight">
+        <span class="heading-gradient">Five pillars,</span>
+        <span class="text-navy"> one integrated team that owns the work end to end.</span>
+      </h1>
+      <p class="mt-6 max-w-2xl text-lg text-ink/75 md:text-xl">
+        Most agencies sell one of these. We sell all of them together — because that is how systems
+        actually get built, shipped, and operated without falling between vendors.
+      </p>
+
+      {/* Anchor nav */}
+      <nav aria-label="Service pillars" class="mt-10">
+        <ul class="flex flex-wrap gap-2">
+          {
+            services.map((s) => {
+              const Icon = iconFor(s.icon);
+              return (
+                <li>
+                  <a
+                    href={`#${s.slug}`}
+                    class="inline-flex items-center gap-2 rounded-full border border-line bg-paper px-3.5 py-2 font-mono text-[11px] font-medium text-navy transition-colors hover:border-brand hover:text-brand"
+                  >
+                    <Icon class="h-3.5 w-3.5" aria-hidden="true" />
+                    {s.name}
+                  </a>
+                </li>
+              );
+            })
+          }
+        </ul>
+      </nav>
+    </div>
   </section>
+
+  {/* One pillar section per CMS service */}
+  {
+    services.map((service, index) => {
+      const Icon = iconFor(service.icon);
+      const o = overlay[service.slug];
+      const matchedSlug = pillarToServiceSlug[service.slug];
+      const cases = matchedSlug
+        ? projects.filter((p) => p.services.includes(matchedSlug)).slice(0, 2)
+        : [];
+      const onLight = index % 2 === 0;
+      return (
+        <section
+          id={service.slug}
+          class:list={[
+            'scroll-mt-24 py-20 md:py-28',
+            onLight ? 'bg-paper' : 'bg-mist',
+          ]}
+          aria-labelledby={`${service.slug}-heading`}
+        >
+          <div class="container">
+            <div class="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_2fr] lg:gap-16">
+              {/* Left rail — sticky on desktop */}
+              <header class="lg:sticky lg:top-28 lg:self-start">
+                <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-navy text-paper">
+                  <Icon class="h-5 w-5" aria-hidden="true" />
+                </span>
+                <p class="mt-4 font-mono text-[11px] uppercase tracking-[0.14em] text-brand">
+                  0{index + 1} · Pillar
+                </p>
+                <h2
+                  id={`${service.slug}-heading`}
+                  class="mt-2 font-display text-h2 font-bold leading-tight"
+                >
+                  <span class="heading-gradient">{service.name}</span>
+                </h2>
+                <p class="mt-4 text-lg text-ink/75">{service.description}</p>
+                <a
+                  href="/contact"
+                  class="mt-6 inline-flex items-center gap-2 rounded-full bg-navy px-5 py-2.5 text-sm font-medium text-paper transition-colors hover:bg-brand"
+                >
+                  Talk to us about {service.name.toLowerCase()}
+                  <ArrowRight class="h-3.5 w-3.5" aria-hidden="true" />
+                </a>
+              </header>
+
+              {/* Right — long copy, capabilities, engagement, case studies */}
+              <div class="space-y-10">
+                {o && (
+                  <p class="text-lg leading-relaxed text-ink/80">{o.longDescription}</p>
+                )}
+
+                {o && (
+                  <div>
+                    <h3 class="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
+                      What you get
+                    </h3>
+                    <ul class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {o.whatYouGet.map((cap) => (
+                        <li class="flex items-start gap-2.5 rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink/80">
+                          <span
+                            aria-hidden="true"
+                            class="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-brand"
+                          />
+                          {cap}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {o && (
+                  <div class="rounded-2xl border border-line bg-paper p-5">
+                    <h3 class="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
+                      Engagement model
+                    </h3>
+                    <p class="mt-2 text-base text-ink/85">{o.engagement}</p>
+                  </div>
+                )}
+
+                {cases.length > 0 && (
+                  <div>
+                    <h3 class="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
+                      Selected case studies
+                    </h3>
+                    <ul class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      {cases.map((p) => (
+                        <li>
+                          <a
+                            href={`/work/${p.slug}`}
+                            class="group flex h-full flex-col justify-between rounded-2xl border border-line bg-paper p-5 transition-all hover:border-navy hover:shadow-[0_12px_36px_-16px_rgba(10,37,64,0.18)]"
+                          >
+                            <div>
+                              <p class="font-mono text-[11px] uppercase tracking-wider text-brand">
+                                {p.industry} · {p.year}
+                              </p>
+                              <h4 class="mt-2 font-display text-base font-semibold text-navy group-hover:text-brand">
+                                {p.title}
+                              </h4>
+                              <p class="mt-2 text-sm leading-relaxed text-ink/70 line-clamp-2">
+                                {p.summary}
+                              </p>
+                            </div>
+                            <span class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand">
+                              Read the case
+                              <ArrowUpRight
+                                class="h-3 w-3 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                                aria-hidden="true"
+                              />
+                            </span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    })
+  }
+
+  {/* One integrated team callout */}
+  <section class="bg-paper py-20 md:py-24" aria-labelledby="integrated-heading">
+    <div class="container">
+      <div class="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-navy via-navy to-brand p-10 text-paper md:p-16">
+        <div aria-hidden="true" class="absolute inset-0 opacity-[0.1] integrated-grid"></div>
+        <div class="relative grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.4fr_1fr]">
+          <div>
+            <p class="font-mono text-xs uppercase tracking-[0.14em] text-paper/70">
+              Why this matters
+            </p>
+            <h2 id="integrated-heading" class="mt-3 max-w-2xl font-display text-h2 font-bold leading-tight">
+              Bought separately, these are five vendors. Bought together, they are one team.
+            </h2>
+            <p class="mt-4 max-w-2xl text-lg text-paper/80">
+              Multi-vendor stacks fail in the gaps — design hands off to engineering hands off to
+              infra hands off to support, and the bugs live in those handoffs. We deliver the
+              pillars together so there are no handoffs.
+            </p>
+          </div>
+          <ul class="grid grid-cols-1 gap-3 font-mono text-sm">
+            {[
+              'One commercial relationship',
+              'One on-call rotation, one Slack channel',
+              'Shared roadmap across design, build, and operate',
+              'No finger-pointing when something breaks',
+            ].map((line) => (
+              <li class="flex items-center gap-2.5 rounded-xl border border-paper/15 bg-paper/5 px-4 py-3 backdrop-blur">
+                <span class="inline-block h-1.5 w-1.5 rounded-full bg-brand" aria-hidden="true" />
+                {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* Tech stack — full slice */}
+  <TechStackSection variant="slice" />
+
+  {/* FAQ */}
+  <section class="bg-mist py-20 md:py-28" aria-labelledby="faq-heading">
+    <div class="container">
+      <header class="max-w-2xl">
+        <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">FAQ</p>
+        <h2 id="faq-heading" class="mt-3 font-display text-h2 font-bold leading-tight">
+          <span class="heading-gradient">The questions sales teams usually dodge.</span>
+        </h2>
+        <p class="mt-4 text-lg text-ink/75">
+          Straight answers — same ones you'd get on a discovery call.
+        </p>
+      </header>
+      <ul class="mt-12 grid grid-cols-1 gap-3 md:grid-cols-2">
+        {
+          faqs.map((item) => (
+            <li>
+              <details class="group rounded-2xl border border-line bg-paper p-5 transition-colors open:border-navy">
+                <summary class="flex cursor-pointer list-none items-start justify-between gap-4 font-display text-base font-semibold text-navy">
+                  {item.q}
+                  <span
+                    aria-hidden="true"
+                    class="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-mist text-navy transition-transform group-open:rotate-45"
+                  >
+                    +
+                  </span>
+                </summary>
+                <p class="mt-3 text-sm leading-relaxed text-ink/75">{item.a}</p>
+              </details>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  {/* CTA */}
+  <section class="bg-paper py-20 md:py-24">
+    <div class="container">
+      <div class="flex flex-col items-start gap-6 rounded-2xl border border-line bg-mist p-8 md:flex-row md:items-center md:justify-between md:p-12">
+        <div class="max-w-xl">
+          <h2 class="font-display text-2xl font-bold text-navy md:text-3xl">
+            Want a specific pillar — or all five?
+          </h2>
+          <p class="mt-2 text-ink/75">
+            Tell us what you are building. We will tell you within one business day whether we are
+            the right fit, and which pillars to start with.
+          </p>
+        </div>
+        <a
+          href="/contact"
+          class="inline-flex items-center gap-2 rounded-full bg-navy px-6 py-3 font-medium text-paper transition-colors hover:bg-brand"
+        >
+          Start a project
+          <ArrowRight class="h-4 w-4" aria-hidden="true" />
+        </a>
+      </div>
+    </div>
+  </section>
+
   <Footer slot="footer" />
 </BaseLayout>
+
+<style>
+  .services-grid,
+  .integrated-grid {
+    background-image:
+      linear-gradient(to right, theme('colors.navy') 1px, transparent 1px),
+      linear-gradient(to bottom, theme('colors.navy') 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .integrated-grid {
+    background-image:
+      linear-gradient(to right, theme('colors.paper') 1px, transparent 1px),
+      linear-gradient(to bottom, theme('colors.paper') 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+</style>
