@@ -2,17 +2,29 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import Masthead from '../components/Masthead.astro';
+import LogoStrip from '../components/LogoStrip.astro';
+import ServicesOverview from '../components/ServicesOverview.astro';
+import { getStats, getServices, getClients } from '../lib/cms';
+
+// Build-time data fetch. With CMS_MODE=fixture (default) this reads from
+// fixtures and never touches the network — see skills.md §2.
+const [stats, services, clients] = await Promise.all([
+  getStats(),
+  getServices(),
+  getClients({ featuredOnly: true }),
+]);
 ---
-<BaseLayout title="From blueprint to production — we engineer the systems companies rely on.">
+
+<BaseLayout
+  title="Zalvice — engineers of the systems companies rely on"
+  description="From blueprint to production — design, development, infrastructure, and ongoing support. One integrated team that has helped 100+ companies transform how they operate."
+>
   <Header slot="header" />
-  <section class="py-12 container">
-    <h1 class="text-3xl md:text-5xl font-bold">From blueprint to production — we engineer the systems companies rely on.</h1>
-    <p class="mt-4 text-lg">Design, development, infrastructure, and ongoing support — one integrated team.</p>
-    <div class="mt-6 flex gap-4">
-      <a href="/contact" class="px-4 py-2 bg-brand text-white rounded">Start a project</a>
-      <a href="/work" class="px-4 py-2 border rounded">See our work</a>
-    </div>
-  </section>
+
+  <Masthead stats={stats} />
+  <LogoStrip clients={clients} />
+  <ServicesOverview services={services} />
 
   <Footer slot="footer" />
 </BaseLayout>

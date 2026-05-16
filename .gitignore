@@ -15,4 +15,5 @@ playwright-report/
 test-results/
 
 apps/web/src/lib/flags.generated.ts
+apps/web/src/env.d.ts
 packages/db/src/migrations/meta/

@@ -4,9 +4,9 @@ import SEO from '../components/SEO.astro';
 
 interface Props {
   title: string;
-  description?: string;
-  ogImage?: string;
-  noindex?: boolean;
+  description?: string | undefined;
+  ogImage?: string | undefined;
+  noindex?: boolean | undefined;
 }
 
 const {

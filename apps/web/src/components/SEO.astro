@@ -2,10 +2,10 @@
 interface Props {
   title: string;
   description: string;
-  ogImage?: string;
-  canonical?: string;
-  jsonLd?: Record<string, unknown>;
-  noindex?: boolean;
+  ogImage?: string | undefined;
+  canonical?: string | undefined;
+  jsonLd?: Record<string, unknown> | undefined;
+  noindex?: boolean | undefined;
 }
 
 const { title, description, ogImage, canonical, jsonLd, noindex } = Astro.props;
@@ -24,4 +24,4 @@ const fullTitle = title.endsWith('Zalvice') ? title : `${title} — Zalvice`;
 <meta property="og:site_name" content="Zalvice" />
 <meta name="twitter:card" content="summary_large_image" />
 {noindex && <meta name="robots" content="noindex,nofollow" />}
-{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+{jsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}

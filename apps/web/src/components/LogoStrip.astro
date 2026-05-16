@@ -1,0 +1,39 @@
+---
+import type { CmsClient } from '../lib/cms';
+
+interface Props {
+  clients: CmsClient[];
+}
+
+const { clients } = Astro.props;
+---
+
+{
+  clients.length > 0 && (
+    <section class="border-y border-line bg-mist py-10 md:py-12">
+      <div class="container">
+        <ul
+          class="grid grid-cols-2 items-center gap-x-8 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
+          aria-label="Selected clients"
+        >
+          {clients.map((client) => (
+            <li class="flex items-center justify-center">
+              {client.logoUrl ? (
+                <img
+                  src={client.logoUrl}
+                  alt={client.logoAlt ?? `${client.name} logo`}
+                  loading="lazy"
+                  class="max-h-8 w-auto opacity-70 grayscale transition-opacity hover:opacity-100"
+                  width="120"
+                  height="32"
+                />
+              ) : (
+                <span class="text-sm font-medium text-muted">{client.name}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
