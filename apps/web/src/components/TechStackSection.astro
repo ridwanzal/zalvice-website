@@ -1,0 +1,157 @@
+---
+import {
+  Activity,
+  Cloud,
+  Database,
+  Layout,
+  Search,
+  ServerCog,
+  ShieldCheck,
+  Smartphone,
+  Sparkles,
+  Workflow,
+} from 'lucide-astro';
+import type { StackCategory } from '../lib/tech-stack';
+import { deliveryStack, aiStack } from '../lib/tech-stack';
+
+const iconMap = {
+  layout: Layout,
+  'server-cog': ServerCog,
+  smartphone: Smartphone,
+  cloud: Cloud,
+  database: Database,
+  activity: Activity,
+  sparkles: Sparkles,
+  workflow: Workflow,
+  search: Search,
+  'shield-check': ShieldCheck,
+} as const;
+
+type IconName = keyof typeof iconMap;
+
+function iconFor(name: string) {
+  return (iconMap as Record<string, (typeof iconMap)[IconName] | undefined>)[name] ?? Layout;
+}
+
+interface Props {
+  /** Show as a homepage section (full padding + heading) or as a slice inside another page (no outer padding). */
+  variant?: 'full' | 'slice' | undefined;
+}
+
+const { variant = 'full' } = Astro.props;
+---
+
+<section
+  class:list={[
+    'bg-paper',
+    variant === 'full' ? 'py-20 md:py-28 lg:py-32' : 'py-12 md:py-16',
+  ]}
+  aria-labelledby="tech-stack-heading"
+>
+  <div class="container">
+    {
+      variant === 'full' && (
+        <header class="max-w-2xl">
+          <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">Technology</p>
+          <h2 id="tech-stack-heading" class="mt-3 font-display text-h2 font-bold leading-tight">
+            <span class="heading-gradient">End-to-end, with AI baked in.</span>
+          </h2>
+          <p class="mt-4 text-lg text-ink/75">
+            We use the same toolchain across every engagement so the work is portable and the
+            operating model is predictable. AI is a first-class layer, not a bolt-on.
+          </p>
+        </header>
+      )
+    }
+
+    {/* Subsection 1 — Delivery stack */}
+    <div class="mt-12 first:mt-0">
+      <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <h3 class="font-display text-xl font-semibold text-navy md:text-2xl">Our delivery stack</h3>
+        <p class="font-mono text-[11px] uppercase tracking-wider text-muted">
+          What we build on
+        </p>
+      </div>
+
+      <ul class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          (deliveryStack as StackCategory[]).map((cat) => {
+            const Icon = iconFor(cat.icon);
+            return (
+              <li class="rounded-2xl border border-line bg-paper p-5 transition-colors hover:border-navy">
+                <div class="flex items-center gap-3">
+                  <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-mist text-brand">
+                    <Icon class="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <h4 class="font-display text-sm font-semibold text-navy">{cat.label}</h4>
+                </div>
+                <ul class="mt-4 flex flex-wrap gap-1.5">
+                  {cat.items.map((it) => (
+                    <li class="rounded-full bg-mist px-2 py-0.5 font-mono text-[10px] font-medium text-navy">
+                      {it.name}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          })
+        }
+      </ul>
+    </div>
+
+    {/* Subsection 2 — AI stack */}
+    <div class="mt-16">
+      <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <h3 class="font-display text-xl font-semibold text-navy md:text-2xl">
+          AI capabilities we build for you
+        </h3>
+        <p class="font-mono text-[11px] uppercase tracking-wider text-muted">
+          Production-grade, not demoware
+        </p>
+      </div>
+
+      <div class="relative mt-6 overflow-hidden rounded-2xl border border-line bg-navy p-6 md:p-8">
+        <div aria-hidden="true" class="absolute inset-0 opacity-[0.08] ai-grid"></div>
+        <ul class="relative grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {
+            (aiStack as StackCategory[]).map((cat) => {
+              const Icon = iconFor(cat.icon);
+              return (
+                <li class="rounded-xl border border-paper/15 bg-paper/5 p-5 backdrop-blur">
+                  <div class="flex items-center gap-3">
+                    <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-paper">
+                      <Icon class="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <h4 class="font-display text-sm font-semibold text-paper">{cat.label}</h4>
+                  </div>
+                  <ul class="mt-4 flex flex-wrap gap-1.5">
+                    {cat.items.map((it) => (
+                      <li class="rounded-full border border-paper/20 bg-paper/5 px-2 py-0.5 font-mono text-[10px] font-medium text-paper/90">
+                        {it.name}
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              );
+            })
+          }
+        </ul>
+      </div>
+
+      <p class="mt-5 max-w-2xl text-sm text-ink/70">
+        Approach: we run pilots on Claude or GPT-4 class models first, instrument with evals from
+        day one, and keep the option to swap providers open. No vendor lock-in beyond what the
+        product demands.
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .ai-grid {
+    background-image:
+      linear-gradient(to right, theme('colors.paper') 1px, transparent 1px),
+      linear-gradient(to bottom, theme('colors.paper') 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+</style>

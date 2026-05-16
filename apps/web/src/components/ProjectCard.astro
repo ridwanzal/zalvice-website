@@ -1,0 +1,84 @@
+---
+import { ArrowUpRight } from 'lucide-astro';
+import type { CmsProjectSummary } from '../lib/cms';
+
+interface Props {
+  project: CmsProjectSummary;
+}
+
+const { project } = Astro.props;
+
+const services = project.services.join(',');
+const tech = project.techStack.join(',');
+---
+
+<a
+  href={`/work/${project.slug}`}
+  class="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-paper transition-all hover:border-navy hover:shadow-[0_12px_36px_-16px_rgba(10,37,64,0.18)]"
+  data-project-card
+  data-industry={project.industry.toLowerCase()}
+  data-services={services}
+  data-tech={tech.toLowerCase()}
+  data-year={String(project.year)}
+>
+  <div class="relative aspect-[16/10] overflow-hidden bg-mist">
+    {
+      project.heroUrl ? (
+        <img
+          src={project.heroUrl}
+          alt={project.heroAlt ?? ''}
+          loading="lazy"
+          decoding="async"
+          class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+        />
+      ) : (
+        <div class="absolute inset-0 project-card-placeholder" aria-hidden="true">
+          <span class="absolute bottom-4 left-4 font-display text-2xl font-bold text-paper/80">
+            {project.clientName}
+          </span>
+        </div>
+      )
+    }
+    <span class="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-paper/90 px-2.5 py-1 font-mono text-[11px] font-medium text-navy backdrop-blur">
+      {project.year}
+    </span>
+  </div>
+
+  <div class="flex flex-1 flex-col p-6">
+    <p class="font-mono text-[11px] uppercase tracking-wider text-brand">{project.industry}</p>
+    <h3 class="mt-2 font-display text-lg font-semibold leading-snug text-navy group-hover:text-brand">
+      {project.title}
+    </h3>
+    <p class="mt-2 text-sm leading-relaxed text-ink/70 line-clamp-2">{project.summary}</p>
+
+    <ul class="mt-5 flex flex-wrap gap-1.5">
+      {
+        project.techStack.slice(0, 3).map((t) => (
+          <li class="rounded-full bg-mist px-2 py-0.5 font-mono text-[10px] font-medium text-navy">
+            {t}
+          </li>
+        ))
+      }
+      {
+        project.techStack.length > 3 && (
+          <li class="rounded-full bg-mist px-2 py-0.5 font-mono text-[10px] text-muted">
+            +{project.techStack.length - 3}
+          </li>
+        )
+      }
+    </ul>
+
+    <span class="mt-auto inline-flex items-center gap-1 pt-6 text-sm font-medium text-navy group-hover:text-brand">
+      Read the case
+      <ArrowUpRight class="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
+    </span>
+  </div>
+</a>
+
+<style>
+  .project-card-placeholder {
+    background-image:
+      radial-gradient(circle at 80% 20%, theme('colors.brand') 0%, transparent 55%),
+      linear-gradient(135deg, theme('colors.navy') 0%, theme('colors.brand') 100%);
+  }
+</style>

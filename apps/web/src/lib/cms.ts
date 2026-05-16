@@ -16,6 +16,9 @@ import {
   fixtureServices,
   fixtureClients,
   fixturePosts,
+  fixtureProjects,
+  fixtureProjectDetails,
+  fixtureTeam,
 } from './cms.fixtures.js';
 
 const StatSchema = z.object({
@@ -66,6 +69,47 @@ const PostSummarySchema = z.object({
 });
 export type CmsPostSummary = z.infer<typeof PostSummarySchema>;
 
+const ProjectSummarySchema = z.object({
+  id: z.number(),
+  slug: z.string(),
+  clientName: z.string(),
+  title: z.string(),
+  summary: z.string(),
+  heroUrl: z.string().min(1).nullable(),
+  heroAlt: z.string().nullable(),
+  year: z.number(),
+  industry: z.string(),
+  services: z.array(z.string()),
+  techStack: z.array(z.string()),
+  featured: z.boolean(),
+});
+export type CmsProjectSummary = z.infer<typeof ProjectSummarySchema>;
+
+const ProjectDetailSchema = ProjectSummarySchema.extend({
+  bodyMd: z.string(),
+  outcomes: z.array(
+    z.object({ label: z.string(), value: z.string(), unit: z.string().optional() }),
+  ),
+  teamSize: z.number(),
+  durationMonths: z.number(),
+});
+export type CmsProjectDetail = z.infer<typeof ProjectDetailSchema>;
+
+const TeamMemberSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  role: z.string(),
+  team: z.enum(['design', 'eng', 'infra', 'ops']),
+  yearsExperience: z.number(),
+  bio: z.string(),
+  photoUrl: z.string().min(1).nullable(),
+  photoAlt: z.string().nullable(),
+  social: z
+    .array(z.object({ kind: z.enum(['linkedin', 'github', 'x']), url: z.string() }))
+    .nullable(),
+});
+export type CmsTeamMember = z.infer<typeof TeamMemberSchema>;
+
 async function fetchCms<T>(path: string, schema: z.ZodType<T>, key: string): Promise<T> {
   const url = `${env.API_URL}/cms${path}`;
   const res = await fetch(url, { headers: { 'x-build-token': env.BUILD_TOKEN } });
@@ -97,6 +141,31 @@ export async function getClients(opts?: { featuredOnly?: boolean }): Promise<Cms
 export async function getLatestPosts(limit = 3): Promise<CmsPostSummary[]> {
   if (env.CMS_MODE === 'fixture') return fixturePosts.slice(0, limit);
   return fetchCms(`/posts/latest?limit=${limit}`, z.array(PostSummarySchema), 'posts');
+}
+
+export async function getProjects(opts?: { featuredOnly?: boolean }): Promise<CmsProjectSummary[]> {
+  if (env.CMS_MODE === 'fixture') {
+    return opts?.featuredOnly ? fixtureProjects.filter((p) => p.featured) : fixtureProjects;
+  }
+  const qs = opts?.featuredOnly ? '?featured=true' : '';
+  return fetchCms(`/projects${qs}`, z.array(ProjectSummarySchema), 'projects');
+}
+
+export async function getProjectBySlug(slug: string): Promise<CmsProjectDetail | null> {
+  if (env.CMS_MODE === 'fixture') {
+    return fixtureProjectDetails.find((p) => p.slug === slug) ?? null;
+  }
+  try {
+    return await fetchCms(`/projects/${slug}`, ProjectDetailSchema, 'project');
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('404')) return null;
+    throw err;
+  }
+}
+
+export async function getTeamMembers(): Promise<CmsTeamMember[]> {
+  if (env.CMS_MODE === 'fixture') return fixtureTeam;
+  return fetchCms('/team', z.array(TeamMemberSchema), 'team');
 }
 
 /** Lookup a single stat by key with a typed default — used by copy that depends on a specific number. */

@@ -1,14 +1,327 @@
 ---
+import { ArrowRight, CalendarDays, Mail, MapPin, Send, Clock } from 'lucide-astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+
+/*
+ * Form UI only. POST handler ships with the admin/API batch (PRD §5.8 +
+ * skills.md §5: honeypot + Turnstile + rate limit + Zod). Until then the
+ * <form> targets a placeholder action and we surface a mailto fallback
+ * so visitors are never stranded.
+ */
+
+const offices = [
+  {
+    city: 'Jakarta',
+    country: 'Indonesia',
+    address: 'Jl. Sudirman Kav. 45\nKuningan, Jakarta Selatan 12940',
+    timezone: 'GMT+7 · WIB',
+    primary: true,
+  },
+  {
+    city: 'Singapore',
+    country: 'Singapore',
+    address: '6 Battery Road, Level 30\nSingapore 049909',
+    timezone: 'GMT+8 · SGT',
+    primary: false,
+  },
+  {
+    city: 'Remote',
+    country: 'Global',
+    address: 'Async-first across 6 time zones',
+    timezone: 'Anywhere',
+    primary: false,
+  },
+];
+
+const projectTypes = [
+  { value: 'design', label: 'Design' },
+  { value: 'development', label: 'Development' },
+  { value: 'infrastructure', label: 'Infrastructure' },
+  { value: 'support', label: 'Support' },
+  { value: 'consulting', label: 'Consulting' },
+  { value: 'other', label: 'Other / not sure' },
+];
+
+const budgets = [
+  { value: 'under_25k', label: 'Under $25k' },
+  { value: '25k_75k', label: '$25k – $75k' },
+  { value: '75k_200k', label: '$75k – $200k' },
+  { value: '200k_plus', label: '$200k+' },
+  { value: 'not_sure', label: 'Not sure yet' },
+];
+
+const timelines = [
+  { value: 'asap', label: 'ASAP' },
+  { value: '1_3_months', label: 'In 1–3 months' },
+  { value: '3_6_months', label: 'In 3–6 months' },
+  { value: 'exploring', label: 'Just exploring' },
+];
 ---
-<BaseLayout title="Contact — Zalvice">
+
+<BaseLayout
+  title="Contact — Zalvice"
+  description="Start a project or book a 30-minute discovery call. Replies within one business day, from an engineer or designer — never a salesperson."
+>
   <Header slot="header" />
-  <section class="py-12 container">
-    <h2 class="text-2xl font-semibold">Contact</h2>
-    <p class="mt-4">Start a project or book a call.</p>
-    <a href="/contact" class="mt-4 inline-block px-4 py-2 bg-brand text-white rounded">Start a project</a>
+
+  {/* Hero */}
+  <section class="bg-paper">
+    <div class="container py-16 md:py-20 lg:py-24">
+      <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">Contact</p>
+      <h1 class="mt-3 max-w-3xl font-display text-h1 font-bold leading-tight">
+        <span class="heading-gradient">Tell us about your system.</span>
+      </h1>
+      <p class="mt-5 max-w-2xl text-lg text-ink/75 md:text-xl">
+        Drop the form below or grab a 30-minute slot. Either way you'll be on a call with someone
+        who could end up on your project — not an SDR.
+      </p>
+      <ul class="mt-8 flex flex-wrap items-center gap-3 font-mono text-[11px]">
+        <li class="inline-flex items-center gap-1.5 rounded-full border border-line bg-mist px-3 py-1.5 text-navy">
+          <Clock class="h-3 w-3" aria-hidden="true" />
+          Reply within 1 business day
+        </li>
+        <li class="inline-flex items-center gap-1.5 rounded-full border border-line bg-mist px-3 py-1.5 text-navy">
+          NDA on request
+        </li>
+        <li class="inline-flex items-center gap-1.5 rounded-full border border-line bg-mist px-3 py-1.5 text-navy">
+          No SDR funnel
+        </li>
+      </ul>
+    </div>
   </section>
+
+  <section class="bg-mist py-16 md:py-24">
+    <div class="container grid grid-cols-1 gap-10 lg:grid-cols-[1.4fr_1fr]">
+      {/* Form */}
+      <div class="rounded-2xl border border-line bg-paper p-6 shadow-[0_1px_0_rgba(10,37,64,0.04),0_24px_48px_-24px_rgba(10,37,64,0.18)] md:p-10">
+        <h2 class="font-display text-2xl font-bold text-navy">Start a project</h2>
+        <p class="mt-2 text-sm text-ink/70">
+          All fields marked with <span class="text-brand">*</span> are required. We'll never share
+          your details — see our
+          <a href="/privacy" class="underline hover:text-brand">privacy policy</a>.
+        </p>
+
+        <form
+          method="post"
+          action="/api/leads"
+          class="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2"
+          novalidate
+        >
+          {/* Honeypot — must stay empty. Hidden from sighted users + AT. */}
+          <div class="hidden" aria-hidden="true">
+            <label>
+              Website
+              <input type="text" name="website" tabindex="-1" autocomplete="off" />
+            </label>
+          </div>
+
+          <div class="md:col-span-2">
+            <label for="name" class="block text-sm font-medium text-navy">
+              Your name <span class="text-brand">*</span>
+            </label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              required
+              autocomplete="name"
+              class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink placeholder:text-muted focus:border-brand"
+              placeholder="Jane Doe"
+            />
+          </div>
+
+          <div>
+            <label for="email" class="block text-sm font-medium text-navy">
+              Work email <span class="text-brand">*</span>
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autocomplete="email"
+              class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink placeholder:text-muted focus:border-brand"
+              placeholder="jane@company.com"
+            />
+          </div>
+
+          <div>
+            <label for="company" class="block text-sm font-medium text-navy">Company</label>
+            <input
+              id="company"
+              name="company"
+              type="text"
+              autocomplete="organization"
+              class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink placeholder:text-muted focus:border-brand"
+              placeholder="Acme Inc."
+            />
+          </div>
+
+          <div>
+            <label for="projectType" class="block text-sm font-medium text-navy">
+              What do you need? <span class="text-brand">*</span>
+            </label>
+            <select
+              id="projectType"
+              name="projectType"
+              required
+              class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+            >
+              <option value="">Choose one…</option>
+              {projectTypes.map((p) => <option value={p.value}>{p.label}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label for="budgetRange" class="block text-sm font-medium text-navy">
+              Budget range <span class="text-brand">*</span>
+            </label>
+            <select
+              id="budgetRange"
+              name="budgetRange"
+              required
+              class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+            >
+              <option value="">Choose one…</option>
+              {budgets.map((b) => <option value={b.value}>{b.label}</option>)}
+            </select>
+          </div>
+
+          <div class="md:col-span-2">
+            <label for="timeline" class="block text-sm font-medium text-navy">Timeline</label>
+            <select
+              id="timeline"
+              name="timeline"
+              class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink focus:border-brand"
+            >
+              <option value="">Choose one…</option>
+              {timelines.map((t) => <option value={t.value}>{t.label}</option>)}
+            </select>
+          </div>
+
+          <div class="md:col-span-2">
+            <label for="message" class="block text-sm font-medium text-navy">
+              Tell us what you're trying to build <span class="text-brand">*</span>
+            </label>
+            <textarea
+              id="message"
+              name="message"
+              required
+              minlength="20"
+              maxlength="5000"
+              rows="6"
+              class="mt-1.5 w-full rounded-lg border border-line bg-paper px-4 py-2.5 text-ink placeholder:text-muted focus:border-brand"
+              placeholder="What's the system you need built or operated? Any constraints, deadlines, or context we should know up front?"
+            ></textarea>
+            <p class="mt-1.5 font-mono text-[11px] text-muted">Minimum 20 characters.</p>
+          </div>
+
+          <div class="flex flex-col items-start justify-between gap-4 md:col-span-2 md:flex-row md:items-center">
+            <p class="text-xs text-muted">
+              Protected by Cloudflare Turnstile. By submitting, you accept our
+              <a href="/terms" class="underline hover:text-brand">terms</a>.
+            </p>
+            <button
+              type="submit"
+              class="inline-flex items-center gap-2 rounded-full bg-navy px-6 py-3 font-medium text-paper transition-colors hover:bg-brand"
+            >
+              Send
+              <Send class="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Right rail — book a call + direct contact + offices */}
+      <aside class="space-y-6">
+        <div
+          id="book"
+          class="rounded-2xl border border-line bg-paper p-6"
+        >
+          <h2 class="font-display text-lg font-semibold text-navy">Book a 30-min call</h2>
+          <p class="mt-2 text-sm text-ink/70">
+            Pick a slot directly on the team's calendar. No follow-up form.
+          </p>
+          <a
+            href="https://cal.com/zalvice/discovery"
+            class="mt-5 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-paper transition-colors hover:bg-navy"
+          >
+            <CalendarDays class="h-4 w-4" aria-hidden="true" />
+            Open calendar
+            <ArrowRight class="h-3.5 w-3.5" aria-hidden="true" />
+          </a>
+        </div>
+
+        <div class="rounded-2xl border border-line bg-paper p-6">
+          <h2 class="font-display text-lg font-semibold text-navy">Prefer email?</h2>
+          <ul class="mt-4 space-y-3 text-sm">
+            <li>
+              <a
+                href="mailto:hello@zalvice.com"
+                class="inline-flex items-center gap-2 text-ink hover:text-brand"
+              >
+                <Mail class="h-4 w-4" aria-hidden="true" />
+                hello@zalvice.com
+                <span class="font-mono text-[11px] text-muted">— general</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="mailto:sales@zalvice.com"
+                class="inline-flex items-center gap-2 text-ink hover:text-brand"
+              >
+                <Mail class="h-4 w-4" aria-hidden="true" />
+                sales@zalvice.com
+                <span class="font-mono text-[11px] text-muted">— new projects</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  {/* Offices */}
+  <section class="bg-paper py-20 md:py-28" aria-labelledby="offices-heading">
+    <div class="container">
+      <header class="max-w-2xl">
+        <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">Offices</p>
+        <h2 id="offices-heading" class="mt-3 font-display text-h2 font-bold leading-tight">
+          <span class="heading-gradient">Two offices, one async-first team.</span>
+        </h2>
+      </header>
+      <ul class="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+        {
+          offices.map((o) => (
+            <li class="relative rounded-2xl border border-line bg-paper p-6 transition-colors hover:border-navy">
+              <div class="flex items-center justify-between">
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-mist text-brand">
+                  <MapPin class="h-5 w-5" aria-hidden="true" />
+                </span>
+                {o.primary && (
+                  <span class="rounded-full bg-mist px-2.5 py-1 font-mono text-[11px] font-medium text-brand">
+                    HQ
+                  </span>
+                )}
+              </div>
+              <h3 class="mt-5 font-display text-lg font-semibold text-navy">
+                {o.city}
+                <span class="ml-1 text-muted">· {o.country}</span>
+              </h3>
+              <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink/70">
+                {o.address}
+              </p>
+              <p class="mt-4 font-mono text-[11px] uppercase tracking-wider text-muted">
+                {o.timezone}
+              </p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
   <Footer slot="footer" />
 </BaseLayout>

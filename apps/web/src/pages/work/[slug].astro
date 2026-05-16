@@ -1,0 +1,332 @@
+---
+import { ArrowLeft, ArrowRight, ArrowUpRight, Calendar, Hash, Users } from 'lucide-astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { getProjects, getProjectBySlug } from '../../lib/cms';
+
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return projects.map((p) => ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+if (!slug) {
+  return Astro.redirect('/work');
+}
+
+const project = await getProjectBySlug(slug);
+if (!project) {
+  return Astro.redirect('/404');
+}
+
+const all = await getProjects();
+const related = all
+  .filter((p) => p.slug !== project.slug)
+  .filter((p) => p.services.some((s) => project.services.includes(s)) || p.industry === project.industry)
+  .slice(0, 3);
+
+const pillarLabels: Record<string, string> = {
+  design: 'Design',
+  dev: 'Development',
+  infra: 'Infrastructure',
+  support: 'Support',
+  consulting: 'Consulting',
+};
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CreativeWork',
+  name: project.title,
+  about: project.summary,
+  creator: { '@type': 'Organization', name: 'Zalvice' },
+  dateCreated: String(project.year),
+};
+
+/*
+ * Placeholder Markdown → HTML. Handles ##, paragraphs, bullets only.
+ * The proper unified/remark/shiki pipeline ships with the blog batch
+ * (skills.md §7). Safe to inline because bodyMd comes from trusted CMS
+ * authors — not user input — per the same skills.md note.
+ */
+function renderSimpleMd(md: string): string {
+  const escape = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return md
+    .split(/\n{2,}/)
+    .map((block) => {
+      const trimmed = block.trim();
+      if (!trimmed) return '';
+      if (trimmed.startsWith('## ')) return `<h2>${escape(trimmed.slice(3))}</h2>`;
+      if (trimmed.startsWith('# ')) return `<h2>${escape(trimmed.slice(2))}</h2>`;
+      if (/^[-*] /m.test(trimmed)) {
+        const items = trimmed
+          .split('\n')
+          .filter((l) => /^[-*] /.test(l))
+          .map((l) => `<li>${escape(l.replace(/^[-*] /, ''))}</li>`)
+          .join('');
+        return `<ul>${items}</ul>`;
+      }
+      return `<p>${escape(trimmed).replace(/\n/g, '<br />')}</p>`;
+    })
+    .join('\n');
+}
+---
+
+<BaseLayout
+  title={`${project.title} — Zalvice`}
+  description={project.summary}
+  ogImage={project.heroUrl ?? undefined}
+>
+  <Header slot="header" />
+
+  <article>
+    {/* Breadcrumb */}
+    <nav class="bg-paper" aria-label="Breadcrumb">
+      <div class="container py-6">
+        <a href="/work" class="inline-flex items-center gap-2 font-mono text-xs text-muted hover:text-brand">
+          <ArrowLeft class="h-3.5 w-3.5" aria-hidden="true" />
+          Back to work
+        </a>
+      </div>
+    </nav>
+
+    {/* Hero */}
+    <header class="bg-paper">
+      <div class="container pb-12">
+        <p class="font-mono text-xs uppercase tracking-[0.14em] text-brand">{project.industry}</p>
+        <h1 class="mt-3 max-w-4xl font-display text-h1 font-bold leading-tight">
+          <span class="heading-gradient">{project.title}</span>
+        </h1>
+        <p class="mt-5 max-w-3xl text-lg text-ink/75 md:text-xl">{project.summary}</p>
+
+        <dl class="mt-10 grid grid-cols-2 gap-6 border-t border-line pt-6 md:grid-cols-4">
+          <div>
+            <dt class="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted">
+              <Hash class="h-3 w-3" aria-hidden="true" />
+              Client
+            </dt>
+            <dd class="mt-1 font-display text-lg font-semibold text-navy">{project.clientName}</dd>
+          </div>
+          <div>
+            <dt class="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted">
+              <Calendar class="h-3 w-3" aria-hidden="true" />
+              Year
+            </dt>
+            <dd class="mt-1 font-display text-lg font-semibold text-navy">{project.year}</dd>
+          </div>
+          <div>
+            <dt class="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted">
+              <Users class="h-3 w-3" aria-hidden="true" />
+              Team
+            </dt>
+            <dd class="mt-1 font-display text-lg font-semibold text-navy">
+              {project.teamSize}
+              <span class="text-muted text-sm font-normal"> · {project.durationMonths} mo</span>
+            </dd>
+          </div>
+          <div>
+            <dt class="font-mono text-[11px] uppercase tracking-wider text-muted">Services</dt>
+            <dd class="mt-1 flex flex-wrap gap-1">
+              {
+                project.services.map((s) => (
+                  <span class="rounded-full bg-mist px-2 py-0.5 font-mono text-[10px] font-medium text-navy">
+                    {pillarLabels[s] ?? s}
+                  </span>
+                ))
+              }
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      {/* Hero image / placeholder */}
+      <div class="container">
+        <div class="relative aspect-[16/8] overflow-hidden rounded-2xl bg-mist">
+          {
+            project.heroUrl ? (
+              <img
+                src={project.heroUrl}
+                alt={project.heroAlt ?? ''}
+                class="h-full w-full object-cover"
+                loading="eager"
+                fetchpriority="high"
+              />
+            ) : (
+              <div class="absolute inset-0 detail-hero-placeholder" aria-hidden="true">
+                <span class="absolute bottom-6 left-6 font-display text-3xl font-bold text-paper/90 md:text-4xl">
+                  {project.clientName}
+                </span>
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </header>
+
+    {/* Outcomes */}
+    <section class="bg-paper py-16 md:py-20" aria-labelledby="outcomes-heading">
+      <div class="container">
+        <h2 id="outcomes-heading" class="font-display text-h2 font-bold leading-tight">
+          <span class="heading-gradient">Outcomes</span>
+        </h2>
+        <dl class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+          {
+            project.outcomes.map((o) => (
+              <div class="rounded-2xl border border-line bg-paper p-6">
+                <dt class="font-mono text-[11px] uppercase tracking-wider text-muted">{o.label}</dt>
+                <dd class="mt-3 font-display text-4xl font-bold leading-none text-navy">
+                  {o.value}
+                  {o.unit && <span class="ml-1 text-base font-medium text-brand">{o.unit}</span>}
+                </dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </section>
+
+    {/* Body — markdown rendered server-side (very simple v1 — full Markdown
+        pipeline ships with skills.md §7 in the blog batch). */}
+    <section class="bg-mist py-16 md:py-24">
+      <div class="container grid grid-cols-1 gap-10 lg:grid-cols-[2fr_1fr]">
+        <div class="prose-zalvice">
+          <Fragment set:html={renderSimpleMd(project.bodyMd)} />
+        </div>
+        <aside class="space-y-6">
+          <div class="rounded-2xl border border-line bg-paper p-6">
+            <h3 class="font-mono text-[11px] uppercase tracking-wider text-muted">Tech stack</h3>
+            <ul class="mt-4 flex flex-wrap gap-1.5">
+              {
+                project.techStack.map((t) => (
+                  <li class="rounded-full bg-mist px-2.5 py-1 font-mono text-[11px] font-medium text-navy">
+                    {t}
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    {/* Related */}
+    {
+      related.length > 0 && (
+        <section class="bg-paper py-20 md:py-24" aria-labelledby="related-heading">
+          <div class="container">
+            <header class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <h2 id="related-heading" class="font-display text-2xl font-bold text-navy md:text-3xl">
+                More work
+              </h2>
+              <a
+                href="/work"
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-navy hover:text-brand"
+              >
+                All projects
+                <ArrowRight class="h-3.5 w-3.5" aria-hidden="true" />
+              </a>
+            </header>
+            <ul class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+              {related.map((r) => (
+                <li>
+                  <a
+                    href={`/work/${r.slug}`}
+                    class="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-paper transition-all hover:border-navy hover:shadow-[0_12px_36px_-16px_rgba(10,37,64,0.18)]"
+                  >
+                    <div class="relative aspect-[16/10] overflow-hidden bg-mist">
+                      <div class="absolute inset-0 related-placeholder" aria-hidden="true" />
+                      <span class="absolute left-4 top-4 rounded-full bg-paper/90 px-2.5 py-1 font-mono text-[11px] font-medium text-navy backdrop-blur">
+                        {r.industry}
+                      </span>
+                    </div>
+                    <div class="flex flex-1 flex-col p-5">
+                      <h3 class="font-display text-base font-semibold text-navy group-hover:text-brand">
+                        {r.title}
+                      </h3>
+                      <span class="mt-auto inline-flex items-center gap-1 pt-4 text-sm font-medium text-brand">
+                        View case
+                        <ArrowUpRight class="h-3 w-3" aria-hidden="true" />
+                      </span>
+                    </div>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )
+    }
+
+    {/* CTA */}
+    <section class="bg-paper pb-24">
+      <div class="container">
+        <div class="rounded-3xl border border-line bg-navy p-8 text-paper md:p-12">
+          <div class="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+            <div class="max-w-xl">
+              <h2 class="font-display text-2xl font-bold leading-tight md:text-3xl">
+                Have something similar in mind?
+              </h2>
+              <p class="mt-2 text-paper/80">
+                The same team that shipped this one is available for new engagements.
+              </p>
+            </div>
+            <a
+              href="/contact"
+              class="inline-flex items-center gap-2 rounded-full bg-paper px-6 py-3 font-medium text-navy transition-colors hover:bg-brand hover:text-paper"
+            >
+              Start a project
+              <ArrowRight class="h-4 w-4" aria-hidden="true" />
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </article>
+
+  <Footer slot="footer" />
+
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
+</BaseLayout>
+
+<style>
+  .detail-hero-placeholder,
+  .related-placeholder {
+    background-image:
+      radial-gradient(circle at 80% 20%, theme('colors.brand') 0%, transparent 55%),
+      linear-gradient(135deg, theme('colors.navy') 0%, theme('colors.brand') 100%);
+  }
+
+  /*
+   * Minimal "prose" styling for the project body. The proper unified/remark
+   * Markdown pipeline ships with the blog batch (skills.md §7) — for now we
+   * style what renderSimpleMd produces (h2, p, ul, ol, code).
+   */
+  .prose-zalvice {
+    color: theme('colors.ink');
+    font-size: 1.0625rem;
+    line-height: 1.7;
+  }
+  .prose-zalvice :global(h2) {
+    font-family: theme('fontFamily.display');
+    font-weight: 700;
+    font-size: 1.75rem;
+    letter-spacing: -0.01em;
+    color: theme('colors.navy');
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .prose-zalvice :global(p) {
+    margin-top: 1rem;
+    color: theme('colors.ink');
+    opacity: 0.85;
+  }
+  .prose-zalvice :global(ul),
+  .prose-zalvice :global(ol) {
+    margin-top: 1rem;
+    padding-left: 1.25rem;
+  }
+  .prose-zalvice :global(li) {
+    margin-top: 0.25rem;
+  }
+</style>

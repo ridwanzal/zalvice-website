@@ -1,0 +1,87 @@
+---
+import { Linkedin, Github, Twitter } from 'lucide-astro';
+import type { CmsTeamMember } from '../lib/cms';
+
+interface Props {
+  member: CmsTeamMember;
+}
+
+const { member } = Astro.props;
+
+const initials = member.name
+  .split(' ')
+  .map((part) => part.charAt(0))
+  .slice(0, 2)
+  .join('')
+  .toUpperCase();
+
+const teamLabel = {
+  design: 'Design',
+  eng: 'Engineering',
+  infra: 'Infrastructure',
+  ops: 'Operations',
+}[member.team];
+
+const socialIcon = {
+  linkedin: Linkedin,
+  github: Github,
+  x: Twitter,
+};
+---
+
+<article class="group flex h-full flex-col rounded-2xl border border-line bg-paper p-6 transition-all hover:border-navy hover:shadow-[0_12px_36px_-16px_rgba(10,37,64,0.18)]">
+  <div class="flex items-start gap-4">
+    {
+      member.photoUrl ? (
+        <img
+          src={member.photoUrl}
+          alt={member.photoAlt ?? member.name}
+          loading="lazy"
+          width="64"
+          height="64"
+          class="h-16 w-16 rounded-xl object-cover"
+        />
+      ) : (
+        <span
+          aria-hidden="true"
+          class="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-navy font-display text-lg font-bold text-paper"
+        >
+          {initials}
+        </span>
+      )
+    }
+    <div class="min-w-0 flex-1">
+      <h3 class="font-display text-lg font-semibold leading-tight text-navy">{member.name}</h3>
+      <p class="mt-0.5 text-sm text-ink/70">{member.role}</p>
+      <p class="mt-2 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-brand">
+        <span class="inline-block h-1.5 w-1.5 rounded-full bg-brand" aria-hidden="true"></span>
+        {teamLabel} · {member.yearsExperience}+ yrs
+      </p>
+    </div>
+  </div>
+
+  <p class="mt-5 text-sm leading-relaxed text-ink/70">{member.bio}</p>
+
+  {
+    member.social && member.social.length > 0 && (
+      <ul class="mt-auto flex items-center gap-2 pt-5">
+        {member.social.map(({ kind, url }) => {
+          const Icon = socialIcon[kind];
+          return (
+            <li>
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${member.name} on ${kind}`}
+                class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-line text-muted transition-colors hover:border-brand hover:text-brand"
+              >
+                <Icon class="h-3.5 w-3.5" aria-hidden="true" />
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    )
+  }
+</article>
