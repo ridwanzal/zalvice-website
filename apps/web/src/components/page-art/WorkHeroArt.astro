@@ -1,65 +1,213 @@
 ---
 /*
- * /work hero art — a wireframe "system diagram" assembling itself.
+ * /work hero art — an isometric grid of "project tiles" that reveals
+ * itself back-to-front, one of those a brand-accent tile in the centre.
  *
- * Visual: three labelled nodes (UI · API · DB) connected by edges and a
- * CDN node sitting above the API. The edges draw themselves in order via
- * stroke-dashoffset, the nodes pop in on a delay, and the finished
- * assembly pulses softly so the piece never reads as "done and frozen."
+ * Each tile is a flat parallelogram (top face) with a tiny depth strip
+ * on the right + front edges to sell the iso illusion, and a minimal
+ * UI motif (chart, header, button, list, logo, form, image, code,
+ * grid) drawn on its top. The motif is projected via the same iso
+ * matrix as the tile, so it sits flat on the surface.
  *
- * No images, no JS. Compositor-friendly (transform/opacity + stroke-
- * dashoffset). Snaps to finished state under prefers-reduced-motion.
+ * No images, no JS. Compositor-friendly (opacity + translateY on each
+ * tile group). Snaps to finished state under prefers-reduced-motion.
  */
+
+const TILE = 45;
+const COS30 = Math.cos(Math.PI / 6); // ~0.866
+const DEPTH = 4; // px of side / front thickness
+const CX = 160;
+const CY = 78; // top apex of the diamond in viewBox space
+
+type Motif =
+  | 'chart'
+  | 'header'
+  | 'button'
+  | 'list'
+  | 'logo'
+  | 'form'
+  | 'image'
+  | 'code'
+  | 'grid';
+
+interface Tile {
+  i: number;
+  j: number;
+  motif: Motif;
+  accent: boolean;
+}
+
+const TILES: Tile[] = [
+  { i: 0, j: 0, motif: 'chart', accent: false },
+  { i: 1, j: 0, motif: 'header', accent: false },
+  { i: 2, j: 0, motif: 'button', accent: false },
+  { i: 0, j: 1, motif: 'list', accent: false },
+  { i: 1, j: 1, motif: 'logo', accent: true },
+  { i: 2, j: 1, motif: 'form', accent: false },
+  { i: 0, j: 2, motif: 'image', accent: false },
+  { i: 1, j: 2, motif: 'code', accent: false },
+  { i: 2, j: 2, motif: 'grid', accent: false },
+];
+
+function project(gx: number, gy: number) {
+  return {
+    x: CX + (gx - gy) * COS30,
+    y: CY + (gx + gy) * 0.5,
+  };
+}
+
+const tileGeom = TILES.map((t) => {
+  const o = project(t.i * TILE, t.j * TILE);
+  const TL = { x: o.x, y: o.y };
+  const TR = { x: o.x + TILE * COS30, y: o.y + TILE * 0.5 };
+  const BR = { x: o.x, y: o.y + TILE };
+  const BL = { x: o.x - TILE * COS30, y: o.y + TILE * 0.5 };
+  const TRb = { x: TR.x, y: TR.y + DEPTH };
+  const BRb = { x: BR.x, y: BR.y + DEPTH };
+  const BLb = { x: BL.x, y: BL.y + DEPTH };
+  const delay = (t.i + t.j) * 0.18;
+  return { ...t, o, TL, TR, BR, BL, TRb, BRb, BLb, delay };
+});
 ---
 
 <div class="work-art" aria-hidden="true">
   <svg viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg">
-    {/* Grid backdrop — drawn directly, not animated, just sets the mood. */}
-    <defs>
-      <pattern id="work-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" stroke-width="0.5" />
-      </pattern>
-    </defs>
-    <rect x="0" y="0" width="320" height="240" fill="url(#work-grid)" class="grid-layer" />
+    {
+      tileGeom.map((t) => (
+        <g
+          class:list={['tile', t.accent && 'tile--accent']}
+          style={`--delay:${t.delay}s`}
+        >
+          {/* Right face (the side facing the viewer's right) */}
+          <path
+            class="tile-side tile-side--right"
+            d={`M ${t.TR.x},${t.TR.y} L ${t.BR.x},${t.BR.y} L ${t.BRb.x},${t.BRb.y} L ${t.TRb.x},${t.TRb.y} Z`}
+          />
+          {/* Front face (the side facing the viewer's left-front) */}
+          <path
+            class="tile-side tile-side--front"
+            d={`M ${t.BL.x},${t.BL.y} L ${t.BR.x},${t.BR.y} L ${t.BRb.x},${t.BRb.y} L ${t.BLb.x},${t.BLb.y} Z`}
+          />
+          {/* Top face + motif in local tile coords, iso-projected. */}
+          <g
+            transform={`matrix(${COS30} 0.5 ${-COS30} 0.5 ${t.o.x} ${t.o.y})`}
+          >
+            <rect width={TILE} height={TILE} class="tile-top" />
 
-    {/* Edges. drawn in order via per-class animation-delay. */}
-    <g class="edges" fill="none" stroke-linecap="round">
-      {/* UI → API */}
-      <path d="M 96 132 Q 130 132 160 132" class="edge edge-1" />
-      {/* API → DB */}
-      <path d="M 184 132 Q 220 132 244 132" class="edge edge-2" />
-      {/* CDN → API (vertical) */}
-      <path d="M 172 72 Q 172 100 172 120" class="edge edge-3" />
-    </g>
-
-    {/* Nodes */}
-    <g class="nodes">
-      {/* CDN */}
-      <g class="node node-cdn" transform="translate(150, 36)">
-        <rect width="44" height="32" rx="6" class="node-bg" />
-        <text x="22" y="20" text-anchor="middle" class="node-label">CDN</text>
-      </g>
-      {/* UI */}
-      <g class="node node-ui" transform="translate(56, 112)">
-        <rect width="40" height="40" rx="6" class="node-bg" />
-        <text x="20" y="25" text-anchor="middle" class="node-label">UI</text>
-      </g>
-      {/* API */}
-      <g class="node node-api" transform="translate(150, 112)">
-        <rect width="44" height="40" rx="6" class="node-bg node-bg--accent" />
-        <text x="22" y="25" text-anchor="middle" class="node-label node-label--paper">API</text>
-        {/* Pulse ring on the centre node */}
-        <rect width="44" height="40" rx="6" class="node-pulse" />
-      </g>
-      {/* DB */}
-      <g class="node node-db" transform="translate(244, 112)">
-        <rect width="40" height="40" rx="6" class="node-bg" />
-        <text x="20" y="25" text-anchor="middle" class="node-label">DB</text>
-      </g>
-    </g>
-
-    {/* Packet — a small dot that travels UI → API → DB on a loop. */}
-    <circle r="3" class="packet" />
+            {t.motif === 'chart' && (
+              <g class="motif">
+                <rect x="9" y="22" width="6" height="14" class="motif-mark" />
+                <rect x="20" y="16" width="6" height="20" class="motif-mark" />
+                <rect x="31" y="11" width="6" height="25" class="motif-mark" />
+              </g>
+            )}
+            {t.motif === 'header' && (
+              <g class="motif">
+                <rect x="8" y="10" width="29" height="3" class="motif-mark" />
+                <rect x="8" y="18" width="14" height="2" class="motif-mark" />
+                <rect x="8" y="24" width="22" height="2" class="motif-mark" />
+                <rect x="8" y="30" width="18" height="2" class="motif-mark" />
+              </g>
+            )}
+            {t.motif === 'button' && (
+              <g class="motif">
+                <rect x="8" y="11" width="20" height="2" class="motif-mark" />
+                <rect
+                  x="10"
+                  y="22"
+                  width="25"
+                  height="11"
+                  rx="2"
+                  class="motif-mark motif-mark--accent"
+                />
+              </g>
+            )}
+            {t.motif === 'list' && (
+              <g class="motif">
+                <rect x="9" y="11" width="3" height="3" class="motif-mark" />
+                <rect x="14" y="11" width="23" height="3" class="motif-mark" />
+                <rect x="9" y="21" width="3" height="3" class="motif-mark" />
+                <rect x="14" y="21" width="23" height="3" class="motif-mark" />
+                <rect x="9" y="31" width="3" height="3" class="motif-mark" />
+                <rect x="14" y="31" width="23" height="3" class="motif-mark" />
+              </g>
+            )}
+            {t.motif === 'logo' && (
+              <g class="motif">
+                <circle
+                  cx="22.5"
+                  cy="22.5"
+                  r="11"
+                  class="motif-mark motif-mark--stroke"
+                  fill="none"
+                />
+                <circle cx="22.5" cy="22.5" r="3.5" class="motif-mark" />
+                {/* Soft pulse ring on the centre tile */}
+                <circle
+                  cx="22.5"
+                  cy="22.5"
+                  r="11"
+                  class="tile-pulse"
+                  fill="none"
+                />
+              </g>
+            )}
+            {t.motif === 'form' && (
+              <g class="motif">
+                <rect x="8" y="11" width="29" height="3" class="motif-mark" />
+                <rect x="8" y="20" width="29" height="3" class="motif-mark" />
+                <rect
+                  x="8"
+                  y="30"
+                  width="14"
+                  height="6"
+                  class="motif-mark motif-mark--accent"
+                />
+              </g>
+            )}
+            {t.motif === 'image' && (
+              <g class="motif">
+                <rect
+                  x="8"
+                  y="8"
+                  width="29"
+                  height="29"
+                  class="motif-mark motif-mark--stroke"
+                  fill="none"
+                />
+                <circle cx="16" cy="17" r="2.5" class="motif-mark" />
+                <path
+                  d="M 10 31 L 19 22 L 26 28 L 32 23 L 36 26 L 36 35 L 10 35 Z"
+                  class="motif-mark"
+                />
+              </g>
+            )}
+            {t.motif === 'code' && (
+              <g class="motif">
+                <rect x="8" y="11" width="11" height="2" class="motif-mark" />
+                <rect x="22" y="11" width="15" height="2" class="motif-mark" />
+                <rect x="13" y="20" width="20" height="2" class="motif-mark" />
+                <rect x="13" y="26" width="15" height="2" class="motif-mark" />
+                <rect x="8" y="33" width="22" height="2" class="motif-mark" />
+              </g>
+            )}
+            {t.motif === 'grid' && (
+              <g class="motif">
+                <circle cx="14" cy="14" r="2" class="motif-mark" />
+                <circle cx="22.5" cy="14" r="2" class="motif-mark" />
+                <circle cx="31" cy="14" r="2" class="motif-mark" />
+                <circle cx="14" cy="22.5" r="2" class="motif-mark" />
+                <circle cx="22.5" cy="22.5" r="2" class="motif-mark" />
+                <circle cx="31" cy="22.5" r="2" class="motif-mark" />
+                <circle cx="14" cy="31" r="2" class="motif-mark" />
+                <circle cx="22.5" cy="31" r="2" class="motif-mark" />
+                <circle cx="31" cy="31" r="2" class="motif-mark" />
+              </g>
+            )}
+          </g>
+        </g>
+      ))
+    }
   </svg>
 </div>
 
@@ -75,111 +223,127 @@
     width: 100%;
     height: 100%;
     display: block;
+    overflow: visible;
   }
 
-  .grid-layer {
-    color: theme('colors.navy');
-    opacity: 0.08;
+  /* ─── Tile container: reveal + idle ─────────────────────────────── */
+  .tile {
+    opacity: 0;
+    transform: translateY(-10px);
+    animation: tile-in 7s ease-out infinite;
+    animation-delay: var(--delay, 0s);
+  }
+  @keyframes tile-in {
+    0% {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    8% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
-  /* ─── Edges: draw themselves on a stagger ──────────────────────────── */
-  .edge {
-    stroke: theme('colors.navy');
-    stroke-width: 1.5;
-    stroke-dasharray: 200;
-    stroke-dashoffset: 200;
-    opacity: 0.5;
-    animation: draw-edge 8s ease-in-out infinite;
-  }
-  .edge-1 { animation-delay: 0.4s; }
-  .edge-2 { animation-delay: 1.1s; }
-  .edge-3 { animation-delay: 1.8s; }
-  @keyframes draw-edge {
-    0%   { stroke-dashoffset: 200; opacity: 0; }
-    15%  { opacity: 0.5; }
-    35%  { stroke-dashoffset: 0;   opacity: 0.7; }
-    85%  { stroke-dashoffset: 0;   opacity: 0.7; }
-    100% { stroke-dashoffset: 0;   opacity: 0.7; }
-  }
-
-  /* ─── Nodes: pop in, then idle ─────────────────────────────────────── */
-  .node-bg {
+  /* ─── Tile faces ────────────────────────────────────────────────── */
+  .tile-top {
     fill: theme('colors.paper');
     stroke: theme('colors.line');
     stroke-width: 1;
+    vector-effect: non-scaling-stroke;
   }
-  .node-bg--accent {
-    fill: theme('colors.navy');
-    stroke: theme('colors.navy');
+  .tile-side {
+    stroke: theme('colors.line');
+    stroke-width: 0.5;
+    vector-effect: non-scaling-stroke;
   }
-  .node-label {
-    font-family: theme('fontFamily.mono');
-    font-size: 10px;
-    fill: theme('colors.navy');
-    letter-spacing: 0.04em;
+  .tile-side--right {
+    fill: theme('colors.line');
+    opacity: 0.55;
   }
-  .node-label--paper { fill: theme('colors.paper'); }
-
-  .node {
-    transform-origin: center;
-    transform-box: fill-box;
-    opacity: 0;
-    transform: scale(0.7);
-    animation: pop-node 8s ease-out infinite;
-  }
-  .node-ui  { animation-delay: 0.2s; }
-  .node-api { animation-delay: 0.9s; }
-  .node-db  { animation-delay: 1.6s; }
-  .node-cdn { animation-delay: 2.3s; }
-  @keyframes pop-node {
-    0%   { opacity: 0; transform: scale(0.7); }
-    8%   { opacity: 1; transform: scale(1); }
-    100% { opacity: 1; transform: scale(1); }
+  .tile-side--front {
+    fill: theme('colors.line');
+    opacity: 0.8;
   }
 
-  /* Centre node ring pulse — subtle, continuous */
-  .node-pulse {
-    fill: none;
+  /* Accent (centre) tile */
+  .tile--accent .tile-top {
+    fill: theme('colors.brand');
     stroke: theme('colors.brand');
+  }
+  .tile--accent .tile-side--right {
+    fill: theme('colors.navy');
+    opacity: 0.55;
+  }
+  .tile--accent .tile-side--front {
+    fill: theme('colors.navy');
+    opacity: 0.75;
+  }
+
+  /* ─── Motif marks on the top face ──────────────────────────────── */
+  .motif-mark {
+    fill: theme('colors.navy');
+    opacity: 0.45;
+  }
+  .motif-mark--stroke {
+    stroke: theme('colors.navy');
+    stroke-width: 1;
+    opacity: 0.45;
+    vector-effect: non-scaling-stroke;
+  }
+  .motif-mark--accent {
+    fill: theme('colors.brand');
+    opacity: 0.7;
+  }
+  .tile--accent .motif-mark {
+    fill: theme('colors.paper');
+    opacity: 0.95;
+  }
+  .tile--accent .motif-mark--stroke {
+    stroke: theme('colors.paper');
+    opacity: 0.95;
+  }
+  .tile--accent .motif-mark--accent {
+    fill: theme('colors.paper');
+    opacity: 1;
+  }
+
+  /* ─── Pulse ring on the centre tile ────────────────────────────── */
+  .tile-pulse {
+    stroke: theme('colors.paper');
     stroke-width: 1.5;
     opacity: 0;
-    transform-origin: center;
+    transform-origin: 22.5px 22.5px;
     transform-box: fill-box;
-    animation: pulse-ring 3.2s ease-out infinite;
-    animation-delay: 2.8s;
+    animation: tile-pulse 3.2s ease-out infinite;
+    animation-delay: 1.4s;
+    vector-effect: non-scaling-stroke;
   }
-  @keyframes pulse-ring {
-    0%   { opacity: 0.6; transform: scale(1); }
-    100% { opacity: 0;   transform: scale(1.5); }
-  }
-
-  /* ─── Packet: traverses UI → API → DB on repeat ────────────────────── */
-  .packet {
-    fill: theme('colors.brand');
-    opacity: 0;
-    animation: packet 4s linear infinite;
-    animation-delay: 3s;
-  }
-  @keyframes packet {
-    0%   { opacity: 0; transform: translate(96px, 132px); }
-    5%   { opacity: 1; }
-    40%  { transform: translate(172px, 132px); }
-    45%  { opacity: 1; }
-    80%  { transform: translate(244px, 132px); opacity: 1; }
-    100% { transform: translate(244px, 132px); opacity: 0; }
+  @keyframes tile-pulse {
+    0% {
+      opacity: 0.7;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.6);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .edge,
-    .node,
-    .node-pulse,
-    .packet {
+    .tile,
+    .tile-pulse {
       animation: none !important;
     }
-    /* Snap to the finished state. */
-    .edge { stroke-dashoffset: 0; opacity: 0.7; }
-    .node { opacity: 1; transform: scale(1); }
-    .node-pulse { opacity: 0; }
-    .packet { opacity: 0; }
+    .tile {
+      opacity: 1;
+      transform: none;
+    }
+    .tile-pulse {
+      opacity: 0;
+    }
   }
 </style>
