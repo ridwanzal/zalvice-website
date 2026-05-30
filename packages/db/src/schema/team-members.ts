@@ -10,7 +10,7 @@ export const teamMembers = mysqlTable('team_members', {
   yearsExperience: int('years_experience').notNull(),
   bio: text('bio').notNull(),
   photoId: int('photo_id').references(() => media.id, { onDelete: 'set null' }),
-  socialLinks: json('social_links').$type<{ kind: 'linkedin' | 'github' | 'x'; url: string }[]>(),
+  socialLinks: json('social_links').$type<{ kind: 'linkedin' | 'github' | 'x' | 'instagram'; url: string }[]>(),
   sortOrder: int('sort_order').notNull().default(0),
   active: boolean('active').notNull().default(true),
 });
@@ -25,7 +25,7 @@ export const TeamMemberSchema = z.object({
   photoUrl: z.string().min(1).nullable(),
   photoAlt: z.string().nullable(),
   social: z
-    .array(z.object({ kind: z.enum(['linkedin', 'github', 'x']), url: z.string() }))
+    .array(z.object({ kind: z.enum(['linkedin', 'github', 'x', 'instagram']), url: z.string() }))
     .nullable(),
 });
 export type TeamMember = z.infer<typeof TeamMemberSchema>;

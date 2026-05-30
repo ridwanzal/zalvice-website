@@ -40,7 +40,7 @@ export const dict: typeof en = {
     services: 'Layanan',
     company: 'Perusahaan',
     getInTouch: 'Hubungi kami',
-    location: 'Jakarta · Remote-first',
+    location: 'Plaju, Palembang · Kantor pusat',
     privacy: 'Privasi',
     terms: 'Ketentuan',
     sitemap: 'Peta situs',
@@ -342,18 +342,11 @@ export const dict: typeof en = {
     hq: 'Kantor pusat',
     offices: [
       {
-        city: 'Jakarta',
+        city: 'Palembang',
         country: 'Indonesia',
-        address: 'Jl. Sudirman Kav. 45\nKuningan, Jakarta Selatan 12940',
+        address: 'Plaju, Palembang\nSumatera Selatan',
         timezone: 'GMT+7 · WIB',
         primary: true,
-      },
-      {
-        city: 'Singapore',
-        country: 'Singapura',
-        address: '6 Battery Road, Level 30\nSingapore 049909',
-        timezone: 'GMT+8 · SGT',
-        primary: false,
       },
       {
         city: 'Remote',
@@ -507,7 +500,7 @@ export const dict: typeof en = {
       },
       {
         q: 'Di mana tim berada?',
-        a: 'Kantor pusat Jakarta + kantor Singapura, remote-first di enam zona waktu. Jam kerja kami ikuti engagement-nya, bukan sebaliknya.',
+        a: 'Kantor pusat Palembang, remote-first di enam zona waktu. Jam kerja kami ikuti engagement-nya, bukan sebaliknya.',
       },
       {
         q: 'Apakah Anda menandatangani NDA?',

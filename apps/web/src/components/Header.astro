@@ -21,6 +21,7 @@ const nav = [
   { href: pathFor(locale, '/work'), label: t.nav.work },
   { href: pathFor(locale, '/blog'), label: t.nav.blog },
   { href: pathFor(locale, '/about'), label: t.nav.about },
+  { href: pathFor(locale, '/contact'), label: t.nav.contact },
 ];
 
 const currentPath = Astro.url.pathname;
@@ -38,7 +39,7 @@ const currentPath = Astro.url.pathname;
         alt="Zalvice"
         width="120"
         height="40"
-        class="h-[1.875rem] w-auto"
+        class="h-10 w-auto"
       />
       <span class="hidden lg:inline-block border-l border-line pl-3 font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
         {t.nav.tagline}

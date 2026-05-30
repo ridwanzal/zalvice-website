@@ -117,7 +117,7 @@ const TeamMemberSchema = z.object({
   photoUrl: z.string().min(1).nullable(),
   photoAlt: z.string().nullable(),
   social: z
-    .array(z.object({ kind: z.enum(['linkedin', 'github', 'x']), url: z.string() }))
+    .array(z.object({ kind: z.enum(['linkedin', 'github', 'x', 'instagram']), url: z.string() }))
     .nullable(),
 });
 export type CmsTeamMember = z.infer<typeof TeamMemberSchema>;
